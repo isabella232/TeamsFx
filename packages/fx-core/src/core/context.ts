@@ -18,9 +18,9 @@ export interface CoreContext extends Context {
 
   deployTemplates?: Record<string, Json>;
 
-  resourceInstanceValues?: Json;
+  resourceInstanceValues?: Record<string, string>;
 
-  stateValues?: Json;
+  stateValues?: Record<string, string>;
 
   tokenProvider: TokenProvider;
 

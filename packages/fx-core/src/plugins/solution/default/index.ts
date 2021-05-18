@@ -123,7 +123,7 @@ export class DefaultSolution implements SolutionPlugin {
         endpoint: "http://oowww.com",
       },
       stateValues: {
-        provision: true,
+        provision: "true",
       },
     });
   }
@@ -143,7 +143,7 @@ export class DefaultSolution implements SolutionPlugin {
         storagename: "mystorage",
       },
       stateValues: {
-        deploy: true,
+        deploy: "true",
       },
     });
   }

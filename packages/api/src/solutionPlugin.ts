@@ -32,8 +32,8 @@ export interface SolutionAllContext extends SolutionContext {
 
 
 export interface ResourceEnvResult {
-    resourceValues: Json;
-    stateValues: Json;
+    resourceValues: Record<string, string>;
+    stateValues: Record<string, string>;
 }
  
 

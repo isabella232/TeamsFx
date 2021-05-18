@@ -92,6 +92,6 @@ export interface ProjectConfigs{
     deployTemplates?: Record<string, Json>;
     provisionConfigs?:Record<string, Json>;
     deployConfigs?: Record<string, Json>;
-    resourceInstanceValues?: Json;
-    stateValues?: Json;
+    resourceInstanceValues?: Record<string, string>;
+    stateValues?: Record<string, string>;
 }

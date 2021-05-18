@@ -91,13 +91,13 @@ export class FxCore implements Core {
         }
       }
       const resourceValueFile = `${projectPath}\\.${ConfigFolderName}\\${envName}.userdata.json`;
-      let resourceInstanceValues:Json|undefined = undefined;
+      let resourceInstanceValues:Record<string, string>|undefined = undefined;
       if(await fs.pathExists(resourceValueFile)){
         resourceInstanceValues = await fs.readJson(resourceValueFile);
       }
 
       const stateValueFile = `${projectPath}\\.${ConfigFolderName}\\${envName}.state.json`;
-      let stateValues:Json|undefined = undefined;
+      let stateValues:Record<string, string>|undefined = undefined;
       if(await fs.pathExists(stateValueFile)){
         stateValues = await fs.readJson(stateValueFile);
       }

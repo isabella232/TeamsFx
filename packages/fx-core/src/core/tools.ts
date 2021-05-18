@@ -106,9 +106,9 @@ export async function initFolder(projectPath:string, appName:string):Promise<Res
   }
 }
 
-export function mergeDict(varDict1?:Json, varDict2?:Json):Json{
+export function mergeDict(varDict1?:Record<string, string>, varDict2?:Record<string, string>):Record<string, string>{
   if(!varDict1 && !varDict2) return {};
-  const res:Json = {};
+  const res:Record<string, string> = {};
   if(varDict1){
     for(const k of Object.keys(varDict1)){
       res[k] = varDict1[k];
