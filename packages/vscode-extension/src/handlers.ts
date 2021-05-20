@@ -24,13 +24,9 @@ import {
   VsCodeEnv,
   AppStudioTokenProvider,
   Tools,
-  DialogMsg,
-  DialogType,
-  QuestionType,
   Void
 } from "fx-api";
 import { deepCopy, FxCore } from "fx-core";
-import DialogManagerInstance from "./userInterface";
 import GraphManagerInstance from "./commonlib/graphLogin";
 import AzureAccountManager from "./commonlib/azureLogin";
 import AppStudioTokenInstance from "./commonlib/appStudioLogin";
@@ -39,7 +35,6 @@ import VsCodeLogInstance from "./commonlib/log";
 import { VSCodeTelemetryReporter } from "./commonlib/telemetry";
 import { CommandsTreeViewProvider, TreeViewCommand } from "./commandsTreeViewProvider";
 import * as extensionPackage from "./../package.json";
-import { ext } from "./extensionVariables";
 import { ExtTelemetry } from "./telemetry/extTelemetry";
 import {
   TelemetryEvent,
@@ -63,10 +58,18 @@ import { FuncToolChecker } from "./debug/depsChecker/funcToolChecker";
 import { DotnetChecker, dotnetChecker } from "./debug/depsChecker/dotnetChecker";
 import { PanelType } from "./controls/PanelType";
 import { NodeChecker } from "./debug/depsChecker/nodeChecker";
+import { extensionContext } from "./extension";
 
 export let core: FxCore;
 export const globalInputs: Inputs = {platform:Platform.VSCode, projectPath:""};
 export const runningTasks = new Set<string>(); // to control state of task execution
+
+export function getWorkspacePath(): string | undefined {
+  const workspacePath: string | undefined = workspace.workspaceFolders?.length
+    ? workspace.workspaceFolders[0].uri.fsPath
+    : undefined;
+  return workspacePath;
+}
 
 export async function activate(): Promise<Result<Void, FxError>> {
   let result: Result<Void, FxError> = ok(Void);
@@ -209,6 +212,7 @@ export async function switchEnvHandler(): Promise<Result<unknown, FxError>> {
 export async function runCommand(task: Task): Promise<Result<unknown, FxError>> {
   const eventName = ExtTelemetry.TaskToEvent(task);
   let result: Result<unknown, FxError> = ok(Void);
+  let openUri;
   try {
     // 1. check concurrent lock
     if (runningTasks.size > 0 && task !== Task.create) {
@@ -240,13 +244,8 @@ export async function runCommand(task: Task): Promise<Result<unknown, FxError>> 
       if (tmpResult.isErr()) {
           result = err(tmpResult.error);
       } else {
-          await DialogManagerInstance.communicate(
-              new DialogMsg(DialogType.Ask, {
-                  type: QuestionType.OpenFolder,
-                  description: tmpResult.value,
-              }),
-          );
-          result = ok(null);
+        openUri = Uri.file(tmpResult.value);
+        result = ok(null);
       }
     } 
     else if (task === Task.provision) result = await core.provisionResources(inputs);
@@ -272,6 +271,10 @@ export async function runCommand(task: Task): Promise<Result<unknown, FxError>> 
 
   // 8. send telemetry and show error
   await processResult(eventName, result);
+
+  if(openUri){
+    commands.executeCommand("vscode.openFolder", openUri);
+  }
 
   return result;
 }
@@ -501,7 +504,7 @@ export async function devProgramHandler(): Promise<boolean> {
 
 export async function openWelcomeHandler() {
   if (isFeatureFlag()) {
-    WebviewPanel.createOrShow(ext.context.extensionPath, PanelType.QuickStart);
+    WebviewPanel.createOrShow(extensionContext.extensionPath, PanelType.QuickStart);
   } else {
     const welcomePanel = window.createWebviewPanel("react", "Teams Toolkit", ViewColumn.One, {
       enableScripts: true,
@@ -512,7 +515,7 @@ export async function openWelcomeHandler() {
 }
 
 export async function openSamplesHandler() {
-  WebviewPanel.createOrShow(ext.context.extensionPath, PanelType.SampleGallery);
+  WebviewPanel.createOrShow(extensionContext.extensionPath, PanelType.SampleGallery);
 }
 
 export async function openAppManagement() {

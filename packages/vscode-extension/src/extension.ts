@@ -4,7 +4,6 @@
 "use strict";
 
 import * as vscode from "vscode";
-import { initializeExtensionVariables } from "./extensionVariables";
 import * as handlers from "./handlers";
 import { ExtTelemetry } from "./telemetry/extTelemetry";
 import { TelemetryEvent, TelemetryProperty } from "./telemetry/extTelemetryEvents";
@@ -12,11 +11,12 @@ import { TeamsfxTaskProvider } from "./debug/teamsfxTaskProvider";
 import { TeamsfxDebugProvider } from "./debug/teamsfxDebugProvider";
 import { ExtensionSurvey } from "./utils/survey";
 
+export let extensionContext:vscode.ExtensionContext;
+
 export async function activate(context: vscode.ExtensionContext) {
   console.log("Teams Toolkit v2 extension is now active!");
 
-  // Init context
-  initializeExtensionVariables(context);
+  extensionContext = context;
 
   context.subscriptions.push(new ExtTelemetry.Reporter(context));
 

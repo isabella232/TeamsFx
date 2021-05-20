@@ -3,8 +3,8 @@
 
 import * as vscode from "vscode";
 import * as path from "path";
-import { ext } from "./extensionVariables";
 import { TreeItem, TreeCategory, Result, FxError, ok } from "fx-api";
+import { extensionContext } from "./extension";
 
 export class CommandsTreeViewProvider implements vscode.TreeDataProvider<TreeViewCommand> {
   public static readonly TreeViewFlag = "TreeView";
@@ -324,7 +324,7 @@ export class TreeViewCommand extends vscode.TreeItem {
     this.contextValue = contextValue;
 
     if (imageName !== undefined) {
-      this.iconPath = path.join(ext.context.extensionPath, "media", `${this.imageName}.svg`);
+      this.iconPath = path.join(extensionContext.extensionPath, "media", `${this.imageName}.svg`);
     }
 
     if (commandId) {

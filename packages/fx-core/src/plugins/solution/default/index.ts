@@ -21,7 +21,11 @@ import {
   TeamsSolutionSetting,
   SystemError,
   err,
+  ResourceContext,
 } from "fx-api";
+import { TaskGroup } from "../../../core";
+import { FrontendPlugin } from "../../resource/frontend";
+import { AzureFunctionPlugin } from "../../resource/function";
 import {
   AzureResourceApim,
   AzureResourceFunction,
@@ -40,6 +44,9 @@ import {
 export class DefaultSolution implements SolutionPlugin {
   name = "fx-solution-default";
   displayName = "Default Solution";
+  functionPlugin = new AzureFunctionPlugin();
+  frontendPlugin = new FrontendPlugin();
+
   async scaffoldFiles(
     ctx: SolutionContext,
     inputs: Inputs
@@ -47,8 +54,26 @@ export class DefaultSolution implements SolutionPlugin {
     const solutionSettingRes = this.fillInSolutionSettings(ctx, inputs);
     if(solutionSettingRes.isErr()) return err(solutionSettingRes.error);
     const solutionSetting = solutionSettingRes.value;
-    solutionSetting.activeResourcePlugins = ["fx-resource-frontend"];
+    solutionSetting.activeResourcePlugins = ["fx-resource-frontend", "fx-resource-function"];
     ctx.solutionSetting = solutionSetting;
+    const resourceContext1 : ResourceContext = {
+      ...ctx,
+      resourceSetting: solutionSetting.resourceSettings["fx-resource-frontend"],
+      resourceState: {}
+    };
+    const resourceContext2 : ResourceContext = {
+      ...ctx,
+      resourceSetting: solutionSetting.resourceSettings["fx-resource-function"],
+      resourceState: {}
+    };
+    const task1 = this.frontendPlugin.getScaffoldSourceCodeTask(resourceContext1, inputs);
+    const task2 = this.frontendPlugin.getScaffoldResourceTemplateTask(resourceContext1, inputs);
+    const task3 = this.functionPlugin.getScaffoldSourceCodeTask(resourceContext1, inputs);
+    const task4 = this.functionPlugin.getScaffoldResourceTemplateTask(resourceContext1, inputs);
+    
+    const group = new TaskGroup(ctx.userInterface, [task1, task2,task3,task4], true, true);
+    group.name = "DefaultSolution-scaffoldFiles";
+    const result = await ctx.userInterface.runWithProgress(group);
     return ok({
       provisionTemplates: {
         "fx-resource-frontend": {

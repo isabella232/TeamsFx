@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 import { exec } from "child_process";
 import * as fs from "fs-extra";
-import { Json, Void, ConfigFolderName, ok, Result, FxError, err } from "fx-api";
+import { Json, Void, ConfigFolderName, ok, Result, FxError, err, TimeConsumingTask, UserInterface, CancelError } from "fx-api";
 import { promisify } from "util";
 import * as error from "./error";
 import Mustache from "mustache";
@@ -120,4 +120,135 @@ export function mergeDict(varDict1?:Record<string, string>, varDict2?:Record<str
     }
   }
   return res;
+}
+
+
+export async function sleep(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+export class TaskGroup implements TimeConsumingTask<any> {
+  name = "TaskGroup";
+  current = 0;
+  total = 0;
+  message = "";
+  isCanceled = false;
+  concurrent = true;
+  showSubTasks = true;
+  fastFail = false;
+  tasks: TimeConsumingTask<any>[];
+  ui: UserInterface;
+  constructor(ui:UserInterface, tasks: TimeConsumingTask<any>[], concurrent: boolean, showSub: boolean) {
+    this.ui = ui;
+    this.tasks = tasks;
+    this.concurrent = concurrent;
+    this.showSubTasks = showSub;
+  }
+  async run():Promise<Result<any,FxError>> {
+    return new Promise(async (resolve) => {
+      let results:Result<any,Error>[] = [];
+      if (!this.concurrent) {
+        this.total = this.tasks.length;
+        for (let i = 0; i < this.total; ++i) {
+          const task = this.tasks[i];
+          let taskRes;
+          if (this.showSubTasks) {
+            taskRes = this.ui.runWithProgress(task);
+          } else {
+            taskRes = task.run();
+          }
+          
+          let skip = false;
+          taskRes.then(v=>{
+            if(v.isErr()){
+              if(this.fastFail){
+                this.cancel();
+                resolve(v);
+              }
+            }
+            results.push(v);
+          })
+          .catch(e=>{
+            if(this.fastFail){
+              this.cancel();
+              resolve(err(e));
+            }
+            else {
+              results.push(err(e));
+              this.current = i + 1;
+              skip = true;
+            }
+          });
+          if(skip) continue;
+
+          while (
+            (task.total === 0 || task.current < task.total) &&
+            !task.isCanceled && !this.isCanceled
+          ) {
+            this.current = task.total === 0 ? 0 : i + task.current / task.total;
+            await sleep(100);
+          }
+          
+          if (task.isCanceled) {
+            if(this.fastFail){
+              this.cancel();
+              resolve(err(CancelError));
+            }
+            else {
+              results.push(err(CancelError));
+              this.current = i + 1;
+              continue;
+            }
+          }
+
+          if(this.isCanceled){
+            resolve(err(CancelError));
+          }
+
+          this.current = i + 1;
+        }
+        this.current = this.total;
+      } else {
+        this.total = this.tasks.length;
+        let promiseResults = [];
+        if (this.showSubTasks) {
+          promiseResults = this.tasks.map((t) => this.ui.runWithProgress(t));
+        } else {
+          promiseResults = this.tasks.map((t) => t.run());
+        }
+        while (this.current < this.total && !this.isCanceled) {
+          let progress = 0;
+          for (const task of this.tasks) {
+            if (task.isCanceled) {
+              if(this.fastFail){
+                this.cancel();
+                resolve(err(CancelError));
+              }
+              else {
+                results.push(err(CancelError));
+                progress += 1;
+                continue;
+              }
+            }
+            progress += task.total === 0 ? 0 : task.current / task.total;
+          }
+          this.current = progress;
+          await sleep(100);
+        }
+
+        if (this.isCanceled) {
+          resolve(err(CancelError));
+        }
+        
+        results = await Promise.all(promiseResults);
+      }
+      resolve(ok(results));
+    });
+  }
+
+  cancel() {
+    for (const task of this.tasks) task.cancel();
+    this.isCanceled = true;
+  }
 }

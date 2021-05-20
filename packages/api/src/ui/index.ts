@@ -4,4 +4,3 @@
 
 export * from "./tree";
 export * from "./ui";
-export * from "./dialog";

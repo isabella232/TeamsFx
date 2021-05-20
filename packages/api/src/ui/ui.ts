@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { Result } from "neverthrow";
 import { FxError } from "../error";
 import { FuncQuestion, StaticOptions } from "../qm/question";
 
@@ -88,29 +89,6 @@ export interface InputResult{
   error?: FxError;
 }
 
-export interface IProgressHandler {
-  /**
-   * Start this progress bar. After calling it, the progress bar will be seen to users with 
-   * ${currentStep} = 0 and ${detail} = detail.
-   * @param detail the detail message of the next work.
-   */
-  start: (detail?: string) => Promise<void>;
-  
-  /**
-   * Update the progress bar's message. After calling it, the progress bar will be seen to 
-   * users with ${currentStep}++ and ${detail} = detail.
-   * This func must be called after calling start().
-   * @param detail the detail message of the next work.
-   */
-  next: (detail?: string) => Promise<void>;
-  
-  /**
-   * End the progress bar. After calling it, the progress bar will disappear. This handler 
-   * can be reused after calling end().
-   */
-  end: () => Promise<void>;
-}
-
 export enum MsgLevel {
   Info = "Info",
   Warning = "Warning",
@@ -121,13 +99,23 @@ export interface FxFuncQuestionOption extends FxUIOption{
   func: FuncQuestion;
 }
 
+export interface TimeConsumingTask<T>{
+  name: string;
+  total: number;
+  current: number;
+  message: string;
+  isCanceled: boolean;
+  run () : Promise<Result<T,FxError>>;
+  cancel(): void;
+}
+
 export interface UserInterface{
   showSingleQuickPick: (option: FxSingleQuickPickOption) => Promise<InputResult> 
   showMultiQuickPick: (option: FxMultiQuickPickOption) => Promise<InputResult> 
   showInputBox: (option: FxInputBoxOption) => Promise<InputResult>;
   showFileSelector: (option: FxFileSelectorOption) => Promise<InputResult>;
-  createProgressBar?: (title: string, totalSteps: number) => IProgressHandler;
-  openExternal?(link: string): Promise<boolean>;
-  showMessage?(level:MsgLevel, message: string, modal: boolean, ...items: string[]): Promise<string | undefined>;
+  openExternal(link: string): Promise<boolean>;
+  showMessage(level:MsgLevel, message: string, modal: boolean, ...items: string[]): Promise<string | undefined>;
+  runWithProgress<T>(task: TimeConsumingTask<T>):Promise<Result<T,FxError>>;
 }
    
