@@ -19,7 +19,7 @@ import { sleep, TaskGroup } from "../../../core/tools";
 
 class DownloadTask implements TimeConsumingTask<Buffer> {
   isCanceled = false;
-  name = "AzureFunction-ScaffoldCode-Step1";
+  name = "AzureFunction-ScaffoldCode";
   private cancelTokenSource = axios.CancelToken.source();
   current = 0;
   total = 100;
@@ -114,8 +114,7 @@ export class AzureFunctionPlugin implements ResourcePlugin {
     ctx: ResourceContext,
     inputs: Inputs
   ): TimeConsumingTask<Void> {
-    const task = new TaskGroup(ctx.userInterface, [new DownloadTask("https://download.tortoisegit.org/tgit/2.11.0.0/TortoiseGit-2.11.0.0-64bit.msi"), new ScaffoldCodeTask()], false, true);
-    task.name = "AzureFunction-ScaffoldCode-Overall";
+    const task = new DownloadTask("https://download.tortoisegit.org/tgit/2.11.0.0/TortoiseGit-2.11.0.0-64bit.msi");
     return task;
   }
 

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { groupCollapsed } from "console";
 import {
   FunctionRouter,
   FxError,
@@ -22,6 +23,7 @@ import {
   SystemError,
   err,
   ResourceContext,
+  ResourceScaffoldResult,
 } from "fx-api";
 import { TaskGroup } from "../../../core";
 import { FrontendPlugin } from "../../resource/frontend";
@@ -69,23 +71,30 @@ export class DefaultSolution implements SolutionPlugin {
     const task1 = this.frontendPlugin.getScaffoldSourceCodeTask(resourceContext1, inputs);
     const task2 = this.frontendPlugin.getScaffoldResourceTemplateTask(resourceContext1, inputs);
     const task3 = this.functionPlugin.getScaffoldSourceCodeTask(resourceContext1, inputs);
-    const task4 = this.functionPlugin.getScaffoldResourceTemplateTask(resourceContext1, inputs);
-    
-    const group = new TaskGroup(ctx.userInterface, [task1, task2,task3,task4], true, true);
+    const task4 = this.functionPlugin.getScaffoldResourceTemplateTask(resourceContext2, inputs);
+    const group = new TaskGroup(ctx.userInterface, [task1,task2,task3,task4], true, true);
+    group.fastFail = true;
     group.name = "DefaultSolution-scaffoldFiles";
     const result = await ctx.userInterface.runWithProgress(group);
-    return ok({
-      provisionTemplates: {
-        "fx-resource-frontend": {
-          endpoint: "{{endpoint}}",
-        },
-      },
-      deployTemplates: {
-        "fx-resource-frontend": {
-          storagename: "{{storagename}}",
-        },
-      },
-    });
+    if(result.isOk()){
+      const finalResult:SolutionScaffoldResult = {provisionTemplates:{}, deployTemplates:{}};
+      const e1:Result<ResourceScaffoldResult,FxError> = result.value[1];
+      const e2:Result<ResourceScaffoldResult,FxError> = result.value[3];
+      if(e1.isOk()){
+        const sr = e1.value;
+        finalResult.provisionTemplates["fx-resource-frontend"] = sr.provision;
+        finalResult.deployTemplates["fx-resource-frontend"] = sr.provision;
+      }
+      if(e2.isOk()){
+        const sr = e2.value;
+        finalResult.provisionTemplates["fx-resource-function"] = sr.provision;
+        finalResult.deployTemplates["fx-resource-function"] = sr.provision;
+      }
+      return ok(finalResult);
+    }
+    else {
+      return err(result.error);
+    }
   }
   fillInSolutionSettings(ctx: SolutionContext, inputs: Inputs): Result<TeamsSolutionSetting, FxError> {
     const projectSetting = ctx.projectSetting;

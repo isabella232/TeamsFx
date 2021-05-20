@@ -17,19 +17,19 @@ import {
 import axios from "axios";
 import { sleep, TaskGroup } from "../../../core/tools";
 
-class DownloadTask implements TimeConsumingTask<Buffer> {
+class DownloadTask implements TimeConsumingTask<Void> {
   isCanceled = false;
-  name = "Frontend-ScaffoldSourceCode-Step1";
+  name = "Frontend-ScaffoldSourceCode";
   private cancelTokenSource = axios.CancelToken.source();
   current = 0;
   total = 100;
   message = "";
   buffers: any[] = [];
-  url : string;
-  constructor(url:string){
+  url: string;
+  constructor(url: string) {
     this.url = url;
   }
-  async run(): Promise<Result<Buffer, FxError>> {
+  async run(): Promise<Result<Void, FxError>> {
     return new Promise(async (resolve) => {
       this.current = 0;
       try {
@@ -49,7 +49,7 @@ class DownloadTask implements TimeConsumingTask<Buffer> {
         });
         res.data.on("end", () => {
           this.result = Buffer.concat(this.buffers);
-          resolve(ok(this.result));
+          resolve(ok(Void));
         });
       } catch (e) {
         this.current = this.total;
@@ -63,43 +63,26 @@ class DownloadTask implements TimeConsumingTask<Buffer> {
   }
   result?: Buffer;
 }
+ 
 
-class ScaffoldCodeTask implements TimeConsumingTask<number> {
-  name = "Frontend-ScaffoldSourceCode-Step2";
-  isCanceled = false;
-  current = 0;
-  total = 100;
-  message = "";
-  async run():Promise<Result<number,FxError>> {
-    this.total = 10;
-    for (let i = 0; i < this.total && !this.isCanceled; ++i) {
-      this.current = i + 1;
-      await sleep(1000);
-    }
-    if(this.isCanceled) return err(CancelError);
-    return ok(this.total);
-  }
-  cancel() {
-    this.isCanceled = true;
-  }
-}
-
-class ScaffoldResourceTemplateTask implements TimeConsumingTask<ResourceScaffoldResult> {
+class ScaffoldResourceTemplateTask
+  implements TimeConsumingTask<ResourceScaffoldResult>
+{
   name = "Frontend-ScaffoldResourceTemplate";
   isCanceled = false;
   current = 0;
   total = 100;
   message = "";
-  async run():Promise<Result<ResourceScaffoldResult,FxError>> {
+  async run(): Promise<Result<ResourceScaffoldResult, FxError>> {
     this.total = 10;
     for (let i = 0; i < this.total && !this.isCanceled; ++i) {
       this.current = i + 1;
       await sleep(1000);
     }
-    if(this.isCanceled) return err(CancelError);
+    if (this.isCanceled) return err(CancelError);
     return ok({
-      provision: {endpoint:"tab-endpoint"},
-      deploy: {path: "/tab/"}
+      provision: { endpoint: "{{endpoint}}" },
+      deploy: { storagename: "{{storagename}}" },
     });
   }
   cancel() {
@@ -114,15 +97,16 @@ export class FrontendPlugin implements ResourcePlugin {
     ctx: ResourceContext,
     inputs: Inputs
   ): TimeConsumingTask<Void> {
-    const task = new TaskGroup(ctx.userInterface, [new DownloadTask("https://download.tortoisegit.org/tgit/2.11.0.0/TortoiseGit-2.11.0.0-64bit.msi"), new ScaffoldCodeTask()], false, true);
-    task.name = "Frontend-ScaffoldSourceCode-Overall";
+    const task = new DownloadTask(
+      "https://download.tortoisegit.org/tgit/2.11.0.0/TortoiseGit-2.11.0.0-64bit.msi"
+    )
     return task;
   }
 
   getScaffoldResourceTemplateTask(
     ctx: ResourceContext,
     inputs: Inputs
-  ) : TimeConsumingTask<ResourceScaffoldResult>{
+  ): TimeConsumingTask<ResourceScaffoldResult> {
     return new ScaffoldResourceTemplateTask();
   }
 }

@@ -3,6 +3,7 @@
 
 import * as path from "path";
 import * as vscode from "vscode";
+import { ext } from "../extensionVariables";
 import { Commands } from "./Commands";
 import axios from "axios";
 import * as AdmZip from "adm-zip";
@@ -13,7 +14,6 @@ import { runCommand } from "../handlers";
 import { Task } from "fx-api";
 import { PanelType } from "./PanelType";
 import { execSync } from "child_process";
-import { extensionContext } from "../extension";
 
 export class WebviewPanel {
   private static readonly viewType = "react";
@@ -117,7 +117,7 @@ export class WebviewPanel {
         }
       },
       undefined,
-      extensionContext.subscriptions
+      ext.context.subscriptions
     );
 
     AppStudioTokenInstance.setStatusChangeMap("quick-start-webview", (status, token, accountInfo) => {

@@ -36,7 +36,7 @@ export const writeConfigMW: Middleware = async (
         const resources = ((coreCtx.projectSetting.solutionSetting) as TeamsSolutionSetting).activeResourcePlugins;
   
         //only create project need to persist template files
-        if(ctx.method === "create" && resources && resources.length > 0){
+        if(ctx.method === "createProject" && resources && resources.length > 0){
           for(const resource of resources){
             if(coreCtx.provisionTemplates)
               await fs.writeFile(`${configFolder}\\${resource}.provision.tpl.json`, JSON.stringify(coreCtx.provisionTemplates[resource], null, 4));
