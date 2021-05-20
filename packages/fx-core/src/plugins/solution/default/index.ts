@@ -24,6 +24,8 @@ import {
   err,
   ResourceContext,
   ResourceScaffoldResult,
+  MsgLevel,
+  CancelError,
 } from "fx-api";
 import { TaskGroup } from "../../../core";
 import { FrontendPlugin } from "../../resource/frontend";
@@ -75,6 +77,13 @@ export class DefaultSolution implements SolutionPlugin {
     const group = new TaskGroup(ctx.userInterface, [task1,task2,task3,task4], true, true);
     group.fastFail = true;
     group.name = "DefaultSolution-scaffoldFiles";
+    const confirm = await ctx.userInterface.showMessage(MsgLevel.Info, "Are you sure to create?", true, "Confirm", "ReadMore");
+    if(confirm === "ReadMore"){
+      ctx.userInterface.openExternal("https://github.com/OfficeDev/TeamsFx");
+    }
+    if(confirm !== "Confirm"){
+      return err(CancelError);
+    }
     const result = await ctx.userInterface.runWithProgress(group);
     if(result.isOk()){
       const finalResult:SolutionScaffoldResult = {provisionTemplates:{}, deployTemplates:{}};
