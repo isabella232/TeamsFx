@@ -3,8 +3,8 @@
 "use strict";
 
 import { Platform, VsCodeEnv } from "./constants";
-import { LogProvider, TelemetryReporter } from "./utils";
-import { UserInterface } from "./ui";
+import { UserInterface } from "./ui/ui";
+import { LogProvider, TelemetryReporter } from "./utils"; 
  
 // eslint-disable-next-line @typescript-eslint/ban-types
 export type Void = {};

@@ -92,7 +92,7 @@ export interface Core {
   ) => Promise<Result<ProjectConfigs, FxError>>;
 
   /**
-   * get question model for lifecycle {@link Task} (create, provision, deploy, publish), Questions are organized as a tree. Please check {@link QTreeNode}.
+   * only for CLI
    */
   getQuestionsForLifecycleTask: (
     task: Task,
@@ -100,7 +100,7 @@ export interface Core {
   ) => Promise<Result<QTreeNode | undefined, FxError>>;
 
   /**
-   * get question model for plugin customized {@link Task}, Questions are organized as a tree. Please check {@link QTreeNode}.
+   * only for CLI
    */
   getQuestionsForUserTask?: (
     router: FunctionRouter,
