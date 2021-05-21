@@ -100,7 +100,7 @@ const questionVisitor: QuestionVistor = async function (
     const validationFunc = question.validation ? getValidationFunction(question.validation, inputs) : undefined;
     if (question.type === NodeType.text) {
       const inputQuestion = question as TextInputQuestion;
-      return await ui.showInputBox({
+      return await ui.inputText({
         title: question.title,
         password: (inputQuestion as TextInputQuestion).password,
         default: defaultValue as string,
@@ -132,7 +132,7 @@ const questionVisitor: QuestionVistor = async function (
         };
       }
       if(question.type === NodeType.singleSelect){
-        return await ui.showSingleQuickPick({
+        return await ui.selectOption({
           title: question.title,
           options: res.options,
           returnObject: selectQuestion.returnObject,
@@ -145,7 +145,7 @@ const questionVisitor: QuestionVistor = async function (
       }
       else {
         const mq = selectQuestion as MultiSelectQuestion;
-        return await ui.showMultiQuickPick({
+        return await ui.selectOptions({
           title: question.title,
           options: res.options,
           returnObject: selectQuestion.returnObject,
@@ -158,16 +158,31 @@ const questionVisitor: QuestionVistor = async function (
           validation: validationFunc
         });
       }
-    } else if (question.type === NodeType.multiFile || question.type === NodeType.singleFile 
-      || question.type === NodeType.folder) {
-      return await ui.showFileSelector({
+    } else if (question.type === NodeType.multiFile) {
+      return await ui.selectFiles({
+        title: question.title,
+        placeholder: placeholder,
+        prompt: prompt,
+        step: step,
+        totalSteps: totalSteps,
+        validation: validationFunc
+      });
+    } else if(question.type === NodeType.singleFile ){
+      return await ui.selectFile({
         title: question.title,
         placeholder: placeholder,
         prompt: prompt,
         default: defaultValue as string,
-        canSelectFiles: question.type !== NodeType.folder,
-        canSelectFolders: question.type === NodeType.folder,
-        canSelectMany: question.type === NodeType.multiFile,
+        step: step,
+        totalSteps: totalSteps,
+        validation: validationFunc
+      });
+    } else if(question.type === NodeType.folder){
+      return await ui.selectFolder({
+        title: question.title,
+        placeholder: placeholder,
+        prompt: prompt,
+        default: defaultValue as string,
         step: step,
         totalSteps: totalSteps,
         validation: validationFunc

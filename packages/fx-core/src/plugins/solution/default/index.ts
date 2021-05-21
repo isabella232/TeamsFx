@@ -79,7 +79,7 @@ export class DefaultSolution implements SolutionPlugin {
     group.name = "DefaultSolution-scaffoldFiles";
     const confirm = await ctx.userInterface.showMessage(MsgLevel.Info, "Are you sure to create?", true, "Confirm", "ReadMore");
     if(confirm === "ReadMore"){
-      ctx.userInterface.openExternal("https://github.com/OfficeDev/TeamsFx");
+      ctx.userInterface.openUrl("https://github.com/OfficeDev/TeamsFx");
     }
     if(confirm !== "Confirm"){
       return err(CancelError);

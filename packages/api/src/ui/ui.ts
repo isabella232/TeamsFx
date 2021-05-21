@@ -3,10 +3,10 @@
 
 import { Result } from "neverthrow";
 import { FxError } from "../error";
-import { FuncQuestion, StaticOptions } from "../qm/question";
+import { StaticOptions } from "../qm/question";
 
 
-export interface FxUIOption{
+export interface UIConfig{
   title: string,
   placeholder?: string;
   prompt?:string;
@@ -14,13 +14,13 @@ export interface FxUIOption{
   totalSteps?: number;
 }
 
-export interface FxSingleQuickPickOption extends FxUIOption{
+export interface SelectOptionConfig extends UIConfig{
   options: StaticOptions;
   default?: string;
   returnObject?: boolean;
 }
 
-export interface FxMultiQuickPickOption extends FxUIOption{
+export interface SelectOptionsConfig extends UIConfig{
   options: StaticOptions;
   default?: string[];
   returnObject?: boolean;
@@ -28,52 +28,26 @@ export interface FxMultiQuickPickOption extends FxUIOption{
   validation?: (input: string[]) => string|undefined|Promise<string|undefined>;
 }
 
-export interface FxInputBoxOption extends FxUIOption{
+export interface TextInputConfig extends UIConfig{
   password?: boolean;
   default?: string;
   validation?: (input: string) => Promise<string | undefined>;
 }
 
-export interface FxFileSelectorOption extends FxUIOption{
-    /**
-     * The resource the dialog shows when opened.
-     */
-    default?: string;
-
-    /**
-     * A human-readable string for the open button.
-     */
-    openLabel?: string;
-
-    /**
-     * Allow to select files, defaults to `true`.
-     */
-    canSelectFiles?: boolean;
-
-    /**
-     * Allow to select folders, defaults to `false`.
-     */
-    canSelectFolders?: boolean;
-
-    /**
-     * Allow to select many files or folders.
-     */
-    canSelectMany?: boolean;
-
-    /**
-     * A set of file filters that are used by the dialog. Each entry is a human-readable label,
-     * like "TypeScript", and an array of extensions, e.g.
-     * ```ts
-     * {
-     *     'Images': ['png', 'jpg']
-     *     'TypeScript': ['ts', 'tsx']
-     * }
-     * ```
-     */
-    filters?: { [name: string]: string[] };
-
-    validation?: (input: string|string[]) => string | undefined | Promise<string | undefined>;
+export interface SelectFileConfig extends UIConfig{
+  default?: string;
+  validation?: (input: string) => Promise<string | undefined>;
 }
+
+export interface SelectFolderConfig extends UIConfig{
+  default?: string;
+  validation?: (input: string) => Promise<string | undefined>;
+}
+
+export interface SelectFilesConfig extends UIConfig{
+  validation?: (input: string[]) => Promise<string | undefined>;
+}
+
 
 export enum InputResultType {
   cancel = "cancel",
@@ -83,7 +57,7 @@ export enum InputResultType {
   skip = "skip"
 }
 
-export interface InputResult{
+export interface InputResult {
   type: InputResultType;
   result?: unknown;
   error?: FxError;
@@ -95,27 +69,24 @@ export enum MsgLevel {
   Error = "Error",
 }
 
-export interface FxFuncQuestionOption extends FxUIOption{
-  func: FuncQuestion;
-}
-
-export interface TimeConsumingTask<T>{
+export interface TimeConsumingTask<T> {
   name: string;
   total: number;
   current: number;
   message: string;
   isCanceled: boolean;
-  run () : Promise<Result<T,FxError>>;
+  run(): Promise<Result<T, FxError>>;
   cancel(): void;
 }
 
-export interface UserInterface{
-  showSingleQuickPick: (option: FxSingleQuickPickOption) => Promise<InputResult> 
-  showMultiQuickPick: (option: FxMultiQuickPickOption) => Promise<InputResult> 
-  showInputBox: (option: FxInputBoxOption) => Promise<InputResult>;
-  showFileSelector: (option: FxFileSelectorOption) => Promise<InputResult>;
-  openExternal(link: string): Promise<boolean>;
-  showMessage(level:MsgLevel, message: string, modal: boolean, ...items: string[]): Promise<string | undefined>;
-  runWithProgress<T>(task: TimeConsumingTask<T>):Promise<Result<T,FxError>>;
+export interface UserInterface {
+  selectOption: (config: SelectOptionConfig) => Promise<InputResult>
+  selectOptions: (config: SelectOptionsConfig) => Promise<InputResult>
+  inputText: (config: TextInputConfig) => Promise<InputResult>;
+  selectFile: (config: SelectFileConfig) => Promise<InputResult>;
+  selectFiles: (config: SelectFilesConfig) => Promise<InputResult>;
+  selectFolder: (config: SelectFolderConfig) => Promise<InputResult>;
+  openUrl(link: string): Promise<boolean>;
+  showMessage(level: MsgLevel, message: string, modal: boolean, ...items: string[]): Promise<string | undefined>;
+  runWithProgress<T>(task: TimeConsumingTask<T>): Promise<Result<T, FxError>>;
 }
-   

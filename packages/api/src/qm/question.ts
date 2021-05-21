@@ -61,14 +61,14 @@ export type DymanicOptions = LocalFunc<StaticOptions>;
  * Basic question data
  */
 export interface BaseQuestion {
-    /**
-     * question identifier
-     */
+ 
     name: string;
-    /**
-     * question answer value
-     */
+ 
     value?: unknown;
+
+    step?: number;
+
+    totalSteps?: number;
 }
 
 export interface UserInputQuestion extends BaseQuestion{
@@ -77,8 +77,9 @@ export interface UserInputQuestion extends BaseQuestion{
     title:string ;
     placeholder?: string | LocalFunc<string | undefined>;
     prompt?: string | LocalFunc<string | undefined>;
-    default?: string | string[] | number | LocalFunc<string | string[] | number| undefined>;
+    default?: string | string[] | LocalFunc<string | string[] | undefined>;
     validation?: ValidationSchema;
+    validationFunc?: (input: string|string[]|undefined) => Promise<string|undefined>;
 }
 
 export interface SingleSelectQuestion extends UserInputQuestion {

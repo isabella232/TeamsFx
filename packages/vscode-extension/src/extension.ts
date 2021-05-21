@@ -205,7 +205,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   await handlers.cmdHdlLoadTreeView(context);
   // 2. Call activate function of toolkit core.
-  await handlers.activate();
+  await handlers.activate(context);
 
   // Trigger telemetry when start debug session
   const debug = vscode.debug.onDidStartDebugSession((e) => {

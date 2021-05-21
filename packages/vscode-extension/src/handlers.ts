@@ -14,7 +14,6 @@ import {
   Func,
   UserError,
   SystemError,
-  returnUserError,
   returnSystemError,
   ConfigFolderName,
   traverse,
@@ -27,7 +26,8 @@ import {
   DialogMsg,
   DialogType,
   QuestionType,
-  Void
+  Void,
+  UserInterface
 } from "fx-api";
 import { deepCopy, FxCore } from "fx-core";
 import DialogManagerInstance from "./userInterface";
@@ -56,7 +56,7 @@ import { isFeatureFlag } from "./utils/commonUtils";
 import * as path from "path";
 import * as fs from "fs-extra";
 import * as vscode from "vscode";
-import { VsCodeUI, VS_CODE_UI } from "./qm/vsc_ui";
+import { VsCodeUI } from "./qm/vsc_ui";
 import { DepsChecker } from "./debug/depsChecker/checker";
 import { backendExtensionsInstall } from "./debug/depsChecker/backendExtensionsInstall";
 import { FuncToolChecker } from "./debug/depsChecker/funcToolChecker";
@@ -67,8 +67,8 @@ import { NodeChecker } from "./debug/depsChecker/nodeChecker";
 export let core: FxCore;
 export const globalInputs: Inputs = {platform:Platform.VSCode, projectPath:""};
 export const runningTasks = new Set<string>(); // to control state of task execution
-
-export async function activate(): Promise<Result<Void, FxError>> {
+export let VS_CODE_UI:UserInterface;
+export async function activate(context: ExtensionContext): Promise<Result<Void, FxError>> {
   let result: Result<Void, FxError> = ok(Void);
   try {
     let appstudioLogin: AppStudioTokenProvider = AppStudioTokenInstance;
@@ -81,6 +81,7 @@ export async function activate(): Promise<Result<Void, FxError>> {
       extensionPackage.name,
       extensionPackage.version
     );
+    VS_CODE_UI = new VsCodeUI(context);
     const tools:Tools = {
       logProvider: VsCodeLogInstance,
       tokenProvider: {

@@ -11,28 +11,31 @@ import {
   Uri,
   window,
   env,
-  ProgressLocation
+  ProgressLocation,
+  ExtensionContext
 } from "vscode";
 import {
   CancelError,
   err,
   FxError,
-  FxFileSelectorOption,
-  FxInputBoxOption,
-  FxMultiQuickPickOption,
-  FxSingleQuickPickOption,
   InputResult,
   InputResultType,
   MsgLevel,
   OptionItem,
   Result,
   returnSystemError,
+  SelectFileConfig,
+  SelectFilesConfig,
+  SelectFolderConfig,
+  SelectOptionConfig,
+  SelectOptionsConfig,
+  TextInputConfig,
   TimeConsumingTask,
+  UIConfig,
   UserInterface
 } from "fx-api";
 import { ExtensionErrors, ExtensionSource } from "../error";
 import { sleep } from "../utils/commonUtils";
-import { extensionContext } from "../extension";
 
 export interface FxQuickPickItem extends QuickPickItem {
   id: string;
@@ -92,8 +95,12 @@ function isSame(set1: Set<string>, set2: Set<string>): boolean {
 
 export class VsCodeUI implements UserInterface {
   showSteps = true;
+  context:ExtensionContext;
+  constructor(context: ExtensionContext){
+    this.context = context;
+  }
 
-  async showSingleQuickPick(option: FxSingleQuickPickOption): Promise<InputResult> {
+  async selectOption(option: SelectOptionConfig): Promise<InputResult> {
     if (option.options.length === 0) {
       return {
         type: InputResultType.error,
@@ -105,7 +112,7 @@ export class VsCodeUI implements UserInterface {
       };
     }
     const okButton: QuickInputButton = {
-      iconPath: Uri.file(extensionContext.asAbsolutePath("media/ok.svg")),
+      iconPath: Uri.file(this.context.asAbsolutePath("media/ok.svg")),
       tooltip: "ok"
     };
     const disposables: Disposable[] = [];
@@ -178,7 +185,7 @@ export class VsCodeUI implements UserInterface {
     }
   }
 
-  async showMultiQuickPick(option: FxMultiQuickPickOption): Promise<InputResult> {
+  async selectOptions(option: SelectOptionsConfig): Promise<InputResult> {
     if (option.options.length === 0) {
       return {
         type: InputResultType.error,
@@ -190,7 +197,7 @@ export class VsCodeUI implements UserInterface {
       };
     }
     const okButton: QuickInputButton = {
-      iconPath: Uri.file(extensionContext.asAbsolutePath("media/ok.svg")),
+      iconPath: Uri.file(this.context.asAbsolutePath("media/ok.svg")),
       tooltip: "ok"
     };
     const disposables: Disposable[] = [];
@@ -208,7 +215,7 @@ export class VsCodeUI implements UserInterface {
         quickPick.step = option.step;
         quickPick.totalSteps = option.totalSteps;
       }
-      let preIds: Set<string> = new Set<string>();
+      const preIds: Set<string> = new Set<string>();
       return await new Promise<InputResult>(
         async (resolve): Promise<void> => {
           // set items
@@ -300,9 +307,9 @@ export class VsCodeUI implements UserInterface {
     }
   }
 
-  async showInputBox(option: FxInputBoxOption): Promise<InputResult> {
+  async inputText(option: TextInputConfig): Promise<InputResult> {
     const okButton: QuickInputButton = {
-      iconPath: Uri.file(extensionContext.asAbsolutePath("media/ok.svg")),
+      iconPath: Uri.file(this.context.asAbsolutePath("media/ok.svg")),
       tooltip: "ok"
     };
     const disposables: Disposable[] = [];
@@ -361,25 +368,37 @@ export class VsCodeUI implements UserInterface {
     }
   }
 
-  async showFileSelector(option: FxFileSelectorOption): Promise<InputResult> {
+  async selectFolder(config: SelectFolderConfig):Promise<InputResult> {
+    return this.selectFileInQuickPick(config as UIConfig, false, false, config.default);
+  }
+
+  async selectFile(config: SelectFileConfig):Promise<InputResult> {
+    return this.selectFileInQuickPick(config as UIConfig, true, false, config.default);
+  }
+
+  async selectFiles(config: SelectFilesConfig):Promise<InputResult> {
+    return this.selectFileInQuickPick(config as UIConfig, true, true);
+  }
+
+  async selectFileInQuickPick(config: UIConfig, file:boolean, many: boolean, defaultValue?: string): Promise<InputResult> {
     const okButton: QuickInputButton = {
-      iconPath: Uri.file(extensionContext.asAbsolutePath("media/ok.svg")),
+      iconPath: Uri.file(this.context.asAbsolutePath("media/ok.svg")),
       tooltip: "ok"
     };
     const disposables: Disposable[] = [];
     try {
       const quickPick: QuickPick<QuickPickItem> = window.createQuickPick();
-      quickPick.title = option.title;
-      if (option.step && option.step > 1) quickPick.buttons = [QuickInputButtons.Back, okButton];
+      quickPick.title = config.title;
+      if (config.step && config.step > 1) quickPick.buttons = [QuickInputButtons.Back, okButton];
       else quickPick.buttons = [okButton];
       quickPick.ignoreFocusOut = true;
-      quickPick.placeholder = option.placeholder;
+      quickPick.placeholder = config.placeholder;
       quickPick.matchOnDescription = false;
       quickPick.matchOnDetail = false;
       quickPick.canSelectMany = false;
       if (this.showSteps) {
-        quickPick.step = option.step;
-        quickPick.totalSteps = option.totalSteps;
+        quickPick.step = config.step;
+        quickPick.totalSteps = config.totalSteps;
       }
       return await new Promise<InputResult>(
         async (resolve): Promise<void> => {
@@ -401,29 +420,29 @@ export class VsCodeUI implements UserInterface {
 
           /// set items
           quickPick.items = [
-            { label: option.prompt || "Select file/folder", detail: option.default }
+            { label: config.prompt || "Select file/folder", detail: defaultValue }
           ];
           const onDidChangeSelection = async function(items: QuickPickItem[]): Promise<any> {
             const defaultUrl = items[0].detail;
             const uriList: Uri[] | undefined = await window.showOpenDialog({
               defaultUri: defaultUrl ? Uri.file(defaultUrl) : undefined,
-              canSelectFiles: option.canSelectFiles,
-              canSelectFolders: option.canSelectFolders,
-              canSelectMany: option.canSelectMany,
-              title: option.title
+              canSelectFiles: file,
+              canSelectFolders: !file,
+              canSelectMany: many,
+              title: config.title
             });
             if (uriList && uriList.length > 0) {
-              if (option.canSelectMany) {
+              if (many) {
                 const results = uriList.map((u) => u.fsPath);
                 const resultString = results.join(";");
                 quickPick.items = [
-                  { label: option.prompt || "Select file/folder", detail: resultString }
+                  { label: config.prompt || "Select file/folder", detail: resultString }
                 ];
                 resolve({ type: InputResultType.sucess, result: results });
               } else {
                 const result = uriList[0].fsPath;
                 quickPick.items = [
-                  { label: option.prompt || "Select file/folder", detail: result }
+                  { label: config.prompt || "Select file/folder", detail: result }
                 ];
                 resolve({ type: InputResultType.sucess, result: result });
               }
@@ -434,23 +453,23 @@ export class VsCodeUI implements UserInterface {
           quickPick.show();
 
           const uriList: Uri[] | undefined = await window.showOpenDialog({
-            defaultUri: option.default ? Uri.file(option.default) : undefined,
-            canSelectFiles: option.canSelectFiles,
-            canSelectFolders: option.canSelectFolders,
-            canSelectMany: option.canSelectMany,
-            title: option.title
+            defaultUri: defaultValue ? Uri.file(defaultValue) : undefined,
+            canSelectFiles: file,
+            canSelectFolders: !file,
+            canSelectMany: many,
+            title: config.title
           });
           if (uriList && uriList.length > 0) {
-            if (option.canSelectMany) {
+            if (many) {
               const results = uriList.map((u) => u.fsPath);
               const resultString = results.join(";");
               quickPick.items = [
-                { label: option.prompt || "Select file/folder", detail: resultString }
+                { label: config.prompt || "Select file/folder", detail: resultString }
               ];
               resolve({ type: InputResultType.sucess, result: results });
             } else {
               const result = uriList[0].fsPath;
-              quickPick.items = [{ label: option.prompt || "Select file/folder", detail: result }];
+              quickPick.items = [{ label: config.prompt || "Select file/folder", detail: result }];
               resolve({ type: InputResultType.sucess, result: result });
             }
           }
@@ -463,7 +482,7 @@ export class VsCodeUI implements UserInterface {
     }
   }
 
-  async openExternal(link: string): Promise<boolean> {
+  async openUrl(link: string): Promise<boolean> {
     const uri = Uri.parse(link);
     return env.openExternal(uri);
   }
@@ -520,5 +539,3 @@ export class VsCodeUI implements UserInterface {
     });
   }
 }
-
-export const VS_CODE_UI = new VsCodeUI();

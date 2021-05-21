@@ -1,7 +1,5 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
-
-import * as fs from "fs-extra";
 import * as jsonschema from "jsonschema"; 
 import { Inputs } from "../types";
   
