@@ -153,3 +153,7 @@ export function returnSystemError(
         return new SystemError(name, e.message, source, e.stack, issueLink, innerError);
     }
 }
+
+
+
+export const UserCancelError:UserError = new UserError("UserCancel", "UserCancel", "UI");

@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { Result } from "neverthrow";
-import { FxError } from "../error";
+import { err, ok, Result } from "neverthrow";
+import { FxError, UserCancelError } from "../error";
 import { StaticOptions } from "../qm/question";
 
 
@@ -69,13 +69,13 @@ export enum MsgLevel {
   Error = "Error",
 }
 
-export interface TimeConsumingTask<T> {
+interface TimeConsumingTask<T> {
   name: string;
   total: number;
   current: number;
   message: string;
   isCanceled: boolean;
-  run(): Promise<Result<T, FxError>>;
+  run(...args: any): Promise<T>;
   cancel(): void;
 }
 
@@ -88,5 +88,81 @@ export interface UserInterface {
   selectFolder: (config: SelectFolderConfig) => Promise<InputResult>;
   openUrl(link: string): Promise<boolean>;
   showMessage(level: MsgLevel, message: string, modal: boolean, ...items: string[]): Promise<string | undefined>;
-  runWithProgress<T>(task: TimeConsumingTask<T>): Promise<Result<T, FxError>>;
+  runWithProgress(task: TimeConsumingTask<any>): Promise<any>;
+}
+
+
+
+export class FunctionGroupTask<T> implements TimeConsumingTask<Result<Result<T, Error>[], Error>> {
+  name:string;
+  current = 0;
+  total = 0;
+  message = "";
+  isCanceled = false;
+  concurrent = true;
+  fastFail = false;
+  tasks: (() => Promise<Result<T, Error>>)[];
+  constructor(
+    name: string,
+    tasks: (() => Promise<Result<T, Error>>)[],
+    concurrent: boolean,
+    fastFail: boolean
+  ) {
+    this.name = name;
+    this.tasks = tasks;
+    this.concurrent = concurrent;
+    this.fastFail = fastFail;
+    this.total = tasks.length;
+  }
+  async run(): Promise<Result<Result<T, Error>[], Error>> {
+    if (this.total === 0) return ok([]);
+    return new Promise(async (resolve) => {
+      let results: Result<T, Error>[] = [];
+      if (!this.concurrent) {
+        for (let i = 0; i < this.total; ++i) {
+          if (this.isCanceled) 
+            resolve(err(UserCancelError));
+          const task = this.tasks[i];
+          try {
+            let taskRes = await task();
+            if (taskRes.isErr() && this.fastFail) {
+              this.isCanceled = true;
+              resolve(err(taskRes.error));
+            }
+            results.push(taskRes);
+          } catch (e) {
+            if (this.fastFail) {
+              this.isCanceled = true;
+              resolve(err(e));
+            }
+            results.push(err(e));
+          }
+          this.current = i + 1;
+        }
+      } else {
+        let promiseResults = this.tasks.map(t => t());
+        promiseResults.forEach((p) => {
+          p.then((v) => {
+            this.current++;
+            if (v.isErr() && this.fastFail){
+              this.isCanceled = true;
+              resolve(err(v.error));
+            } 
+          }).catch((e) => {
+            this.current++;
+            if (this.fastFail){
+              this.isCanceled = true;
+              resolve(err(e));
+            } 
+          });
+        });
+        results = await Promise.all(promiseResults);
+      }
+      resolve(ok(results));
+    });
+  }
+
+  cancel() {
+    this.isCanceled = true;
+  }
 }
