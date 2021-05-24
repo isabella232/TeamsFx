@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 import { exec } from "child_process";
 import * as fs from "fs-extra";
-import { Json, Void, ConfigFolderName, ok, Result, FxError, err, TimeConsumingTask, UserInterface, CancelError } from "fx-api";
+import { Json, Void, ConfigFolderName, ok, Result, FxError, err, TimeConsumingTask, UserInteraction, CancelError } from "fx-api";
 import { promisify } from "util";
 import * as error from "./error";
 import Mustache from "mustache";
@@ -133,13 +133,14 @@ export class TaskGroup implements TimeConsumingTask<any> {
   current = 0;
   total = 0;
   message = "";
+  cancelable = true;
   isCanceled = false;
   concurrent = true;
   showSubTasks = true;
   fastFail = false;
   tasks: TimeConsumingTask<any>[];
-  ui: UserInterface;
-  constructor(ui:UserInterface, tasks: TimeConsumingTask<any>[], concurrent: boolean, showSub: boolean) {
+  ui: UserInteraction;
+  constructor(ui:UserInteraction, tasks: TimeConsumingTask<any>[], concurrent: boolean, showSub: boolean) {
     this.ui = ui;
     this.tasks = tasks;
     this.concurrent = concurrent;

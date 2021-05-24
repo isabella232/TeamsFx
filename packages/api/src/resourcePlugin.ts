@@ -60,7 +60,7 @@ export interface ResourcePlugin {
   getScaffoldSourceCodeTask? (
     ctx: ResourceContext,
     inputs: Inputs
-  ) : TimeConsumingTask<Void>;
+  ) : TimeConsumingTask<Result<Void, FxError>>;
 
   scaffoldSourceCode?: (
     ctx: ResourceContext,
@@ -75,7 +75,7 @@ export interface ResourcePlugin {
   getScaffoldResourceTemplateTask?(
     ctx: ResourceContext,
     inputs: Inputs
-  ) : TimeConsumingTask<ResourceScaffoldResult>;
+  ) : TimeConsumingTask<Result<ResourceScaffoldResult, FxError>>;
 
   provisionResource?: (
     ctx: ResourceEnvContext,

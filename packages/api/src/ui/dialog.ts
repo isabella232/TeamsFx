@@ -4,7 +4,7 @@
  
 import { Result } from "neverthrow";
 import { FxError } from "../error";
-import { MsgLevel } from "./ui";
+import { MsgLevel } from "../qm/ui";
 export interface Dialog {
     /*
      * Platforms (such as VSCode, CLI) support this function to communicate with core.

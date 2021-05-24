@@ -17,7 +17,8 @@ import {
 import axios from "axios";
 import { sleep, TaskGroup } from "../../../core/tools";
 
-class DownloadTask implements TimeConsumingTask<Buffer> {
+class DownloadTask implements TimeConsumingTask<Result<Buffer, FxError>> {
+  cancelable = true;
   isCanceled = false;
   name = "AzureFunction-ScaffoldCode";
   private cancelTokenSource = axios.CancelToken.source();
@@ -63,29 +64,10 @@ class DownloadTask implements TimeConsumingTask<Buffer> {
   }
   result?: Buffer;
 }
-
-class ScaffoldCodeTask implements TimeConsumingTask<number> {
-  name = "AzureFunction-ScaffoldCode-Step2";
-  isCanceled = false;
-  current = 0;
-  total = 100;
-  message = "";
-  async run():Promise<Result<number,FxError>> {
-    this.total = 10;
-    for (let i = 0; i < this.total && !this.isCanceled; ++i) {
-      this.current = i + 1;
-      await sleep(1000);
-    }
-    if(this.isCanceled) return err(CancelError);
-    return ok(this.total);
-  }
-  cancel() {
-    this.isCanceled = true;
-  }
-}
-
-class ScaffoldResourceTemplateTask implements TimeConsumingTask<ResourceScaffoldResult> {
+ 
+class ScaffoldResourceTemplateTask implements TimeConsumingTask<Result<ResourceScaffoldResult,FxError>> {
   name = "AzureFunction-ScaffoldResourceTemplate";
+  cancelable = true;
   isCanceled = false;
   current = 0;
   total = 100;
@@ -113,7 +95,7 @@ export class AzureFunctionPlugin implements ResourcePlugin {
   getScaffoldSourceCodeTask(
     ctx: ResourceContext,
     inputs: Inputs
-  ): TimeConsumingTask<Void> {
+  ): TimeConsumingTask<Result<Void, FxError>> {
     const task = new DownloadTask("https://download.tortoisegit.org/tgit/2.11.0.0/TortoiseGit-2.11.0.0-64bit.msi");
     return task;
   }
@@ -121,7 +103,7 @@ export class AzureFunctionPlugin implements ResourcePlugin {
   getScaffoldResourceTemplateTask(
     ctx: ResourceContext,
     inputs: Inputs
-  ) : TimeConsumingTask<ResourceScaffoldResult>{
+  ) : TimeConsumingTask<Result<ResourceScaffoldResult,FxError>>{
     return new ScaffoldResourceTemplateTask();
   }
 }

@@ -32,7 +32,8 @@ import {
   TextInputConfig,
   TimeConsumingTask,
   UIConfig,
-  UserInterface
+  UserCancelError,
+  UserInteraction
 } from "fx-api";
 import { ExtensionErrors, ExtensionSource } from "../error";
 import { sleep } from "../utils/commonUtils";
@@ -93,7 +94,7 @@ function isSame(set1: Set<string>, set2: Set<string>): boolean {
   return true;
 }
 
-export class VsCodeUI implements UserInterface {
+export class VsCodeUI implements UserInteraction {
   showSteps = true;
   context:ExtensionContext;
   constructor(context: ExtensionContext){
@@ -500,40 +501,50 @@ export class VsCodeUI implements UserInterface {
     else if (level === MsgLevel.Error) return window.showErrorMessage(message, option, ...items);
   }
 
-  async runWithProgress<T>(task: TimeConsumingTask<T>): Promise<Result<T, FxError>> {
-    return new Promise<Result<T, FxError>>(async (resolve) => {
+  async runWithProgress(
+    task: TimeConsumingTask<Result<any, FxError>>
+  ): Promise<Result<any, FxError>> {
+    return new Promise<Result<any, FxError>>(async (resolve) => {
       window.withProgress(
         {
           location: ProgressLocation.Notification,
           title: task.name,
-          cancellable: true
+          cancellable: task.cancelable
         },
         async (progress, token): Promise<any> => {
-          token.onCancellationRequested(() => {
-            task.cancel();
-            resolve(err(CancelError));
-          });
+          if(task.cancelable){
+            token.onCancellationRequested(() => {
+              task.cancel();
+              resolve(err(UserCancelError));
+            });
+          }
+          
           const startTime = new Date().getTime();
           const res = task.run();
           progress.report({ increment: 0 });
           let lastLength = 0;
-          res.then((v) => resolve(v)).catch((e) => resolve(err(e)));
-          while ((task.total === 0 || task.current < task.total) && !task.isCanceled) {
+          res.then((v:any) => { 
+            resolve(v) 
+          }).catch((e:any) => { 
+            resolve(err(e))
+          });
+          while ((task.current < task.total) && !task.isCanceled) {
             const inc = task.current - lastLength;
             if (inc > 0) {
               const elapsedTime = new Date().getTime() - startTime;
               const remainingTime = (elapsedTime * (task.total - task.current)) / task.current;
               progress.report({
                 increment: (inc * 100) / task.total,
-                message: `${task.message} - ${Math.round(
+                message: `progress: ${Math.round(
                   (task.current * 100) / task.total
-                )} %, remaining time: ${Math.round(remainingTime)} ms`
+                )} %, remaining time: ${Math.round(remainingTime)} ms 
+                ${task.message !== undefined && task.message !== "" ? "("+task.message+")" : ""}`
               });
               lastLength += inc;
             }
             await sleep(100);
           }
-          if (task.isCanceled) resolve(err(CancelError));
+          if (task.isCanceled) resolve(err(UserCancelError));
         }
       );
     });

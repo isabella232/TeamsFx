@@ -3,7 +3,7 @@
 "use strict";
 
 import { Platform, VsCodeEnv } from "./constants";
-import { UserInterface } from "./ui/ui";
+import { UserInteraction } from "./qm/ui";
 import { LogProvider, TelemetryReporter } from "./utils"; 
  
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -65,7 +65,7 @@ export interface Context {
      
     projectPath: string;
  
-    userInterface: UserInterface;
+    userInterface: UserInteraction;
  
     logProvider: LogProvider;
  

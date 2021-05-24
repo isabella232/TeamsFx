@@ -3,7 +3,7 @@
 
 import { err, ok, Result } from "neverthrow";
 import { FxError, UserCancelError } from "../error";
-import { StaticOptions } from "../qm/question";
+import { StaticOptions } from "./question";
 
 
 export interface UIConfig{
@@ -69,8 +69,10 @@ export enum MsgLevel {
   Error = "Error",
 }
 
-interface TimeConsumingTask<T> {
+
+export interface TimeConsumingTask<T> {
   name: string;
+  cancelable:boolean;
   total: number;
   current: number;
   message: string;
@@ -79,40 +81,51 @@ interface TimeConsumingTask<T> {
   cancel(): void;
 }
 
-export interface UserInterface {
-  selectOption: (config: SelectOptionConfig) => Promise<InputResult>
-  selectOptions: (config: SelectOptionsConfig) => Promise<InputResult>
+export interface UserInteraction {
+  selectOption: (config: SelectOptionConfig) => Promise<InputResult>;
+  selectOptions: (config: SelectOptionsConfig) => Promise<InputResult>;
   inputText: (config: TextInputConfig) => Promise<InputResult>;
   selectFile: (config: SelectFileConfig) => Promise<InputResult>;
   selectFiles: (config: SelectFilesConfig) => Promise<InputResult>;
   selectFolder: (config: SelectFolderConfig) => Promise<InputResult>;
   openUrl(link: string): Promise<boolean>;
-  showMessage(level: MsgLevel, message: string, modal: boolean, ...items: string[]): Promise<string | undefined>;
+  showMessage(
+    level: MsgLevel,
+    message: string,
+    modal: boolean,
+    ...items: string[]
+  ): Promise<string | undefined>;
   runWithProgress(task: TimeConsumingTask<any>): Promise<any>;
 }
 
-
+export interface FunctionGroupTaskConfig<T>{
+  name: string,
+  tasks: (() => Promise<Result<T, Error>>)[],
+  taskNames?: string[];
+  cancelable: boolean,
+  concurrent: boolean,
+  fastFail: boolean
+}
 
 export class FunctionGroupTask<T> implements TimeConsumingTask<Result<Result<T, Error>[], Error>> {
-  name:string;
+  name: string;
   current = 0;
   total = 0;
   message = "";
   isCanceled = false;
   concurrent = true;
+  cancelable = true;
   fastFail = false;
   tasks: (() => Promise<Result<T, Error>>)[];
-  constructor(
-    name: string,
-    tasks: (() => Promise<Result<T, Error>>)[],
-    concurrent: boolean,
-    fastFail: boolean
-  ) {
-    this.name = name;
-    this.tasks = tasks;
-    this.concurrent = concurrent;
-    this.fastFail = fastFail;
-    this.total = tasks.length;
+  taskNames?: string[];
+  constructor(config: FunctionGroupTaskConfig<T>) {
+    this.name = config.name;
+    this.tasks = config.tasks;
+    this.taskNames = config.taskNames;
+    this.cancelable = config.cancelable;
+    this.concurrent = config.concurrent;
+    this.fastFail = config.fastFail;
+    this.total = this.tasks.length;
   }
   async run(): Promise<Result<Result<T, Error>[], Error>> {
     if (this.total === 0) return ok([]);
@@ -120,40 +133,48 @@ export class FunctionGroupTask<T> implements TimeConsumingTask<Result<Result<T, 
       let results: Result<T, Error>[] = [];
       if (!this.concurrent) {
         for (let i = 0; i < this.total; ++i) {
-          if (this.isCanceled) 
+          if (this.isCanceled === true) 
+          {
             resolve(err(UserCancelError));
+            return ;
+          }  
           const task = this.tasks[i];
+          if(this.taskNames){
+            this.message = this.taskNames[i];
+          }
           try {
             let taskRes = await task();
             if (taskRes.isErr() && this.fastFail) {
               this.isCanceled = true;
               resolve(err(taskRes.error));
+              return ;
             }
             results.push(taskRes);
           } catch (e) {
             if (this.fastFail) {
               this.isCanceled = true;
               resolve(err(e));
+              return ;
             }
             results.push(err(e));
           }
           this.current = i + 1;
         }
       } else {
-        let promiseResults = this.tasks.map(t => t());
+        let promiseResults = this.tasks.map((t) => t());
         promiseResults.forEach((p) => {
           p.then((v) => {
             this.current++;
-            if (v.isErr() && this.fastFail){
+            if (v.isErr() && this.fastFail) {
               this.isCanceled = true;
               resolve(err(v.error));
-            } 
+            }
           }).catch((e) => {
             this.current++;
-            if (this.fastFail){
+            if (this.fastFail) {
               this.isCanceled = true;
               resolve(err(e));
-            } 
+            }
           });
         });
         results = await Promise.all(promiseResults);
@@ -163,6 +184,7 @@ export class FunctionGroupTask<T> implements TimeConsumingTask<Result<Result<T, 
   }
 
   cancel() {
-    this.isCanceled = true;
+    if(this.cancelable)
+      this.isCanceled = true;
   }
 }

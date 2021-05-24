@@ -27,7 +27,7 @@ import {
   DialogType,
   QuestionType,
   Void,
-  UserInterface
+  UserInteraction
 } from "fx-api";
 import { deepCopy, FxCore } from "fx-core";
 import DialogManagerInstance from "./userInterface";
@@ -67,7 +67,7 @@ import { NodeChecker } from "./debug/depsChecker/nodeChecker";
 export let core: FxCore;
 export const globalInputs: Inputs = {platform:Platform.VSCode, projectPath:""};
 export const runningTasks = new Set<string>(); // to control state of task execution
-export let VS_CODE_UI:UserInterface;
+export let VS_CODE_UI:UserInteraction;
 export async function activate(context: ExtensionContext): Promise<Result<Void, FxError>> {
   let result: Result<Void, FxError> = ok(Void);
   try {

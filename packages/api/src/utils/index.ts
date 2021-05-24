@@ -6,7 +6,7 @@ import { LogProvider } from "./log";
 import { TokenProvider } from "./login";
 import { TelemetryReporter } from "./telemetry";
 import { TreeProvider } from "../ui/tree";
-import { UserInterface } from "../ui";
+import { UserInteraction } from "../ui";
 import { UserError } from "../error";
 
 export * from "./login";
@@ -20,7 +20,7 @@ export interface Tools
     tokenProvider: TokenProvider;
     telemetryReporter: TelemetryReporter;
     treeProvider: TreeProvider;
-    userInterface: UserInterface;
+    userInterface: UserInteraction;
 }
 
 export const CancelError:UserError = new UserError("UserCancel", "UserCancel", "UI");

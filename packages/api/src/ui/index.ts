@@ -3,5 +3,5 @@
 "use strict";
 
 export * from "./tree";
-export * from "./ui";
+export * from "../qm/ui";
 export * from "./dialog";

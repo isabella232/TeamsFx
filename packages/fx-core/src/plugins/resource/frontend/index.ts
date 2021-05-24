@@ -17,7 +17,8 @@ import {
 import axios from "axios";
 import { sleep, TaskGroup } from "../../../core/tools";
 
-class DownloadTask implements TimeConsumingTask<Void> {
+class DownloadTask implements TimeConsumingTask<Result<Void, FxError>> {
+  cancelable = true;
   isCanceled = false;
   name = "Frontend-ScaffoldSourceCode";
   private cancelTokenSource = axios.CancelToken.source();
@@ -66,9 +67,10 @@ class DownloadTask implements TimeConsumingTask<Void> {
  
 
 class ScaffoldResourceTemplateTask
-  implements TimeConsumingTask<ResourceScaffoldResult>
+  implements TimeConsumingTask<Result<ResourceScaffoldResult, FxError>>
 {
   name = "Frontend-ScaffoldResourceTemplate";
+  cancelable = true;
   isCanceled = false;
   current = 0;
   total = 100;
@@ -96,7 +98,7 @@ export class FrontendPlugin implements ResourcePlugin {
   getScaffoldSourceCodeTask(
     ctx: ResourceContext,
     inputs: Inputs
-  ): TimeConsumingTask<Void> {
+  ): TimeConsumingTask<Result<Void, FxError>> {
     const task = new DownloadTask(
       "https://download.tortoisegit.org/tgit/2.11.0.0/TortoiseGit-2.11.0.0-64bit.msi"
     )
@@ -106,7 +108,7 @@ export class FrontendPlugin implements ResourcePlugin {
   getScaffoldResourceTemplateTask(
     ctx: ResourceContext,
     inputs: Inputs
-  ): TimeConsumingTask<ResourceScaffoldResult> {
+  ): TimeConsumingTask<Result<ResourceScaffoldResult, FxError>> {
     return new ScaffoldResourceTemplateTask();
   }
 }

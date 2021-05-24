@@ -11,7 +11,7 @@ import {
   Void,
   Func,
   Inputs,
-  UserInterface,
+  UserInteraction,
 } from "./index";
 
 export interface Core {
@@ -23,14 +23,14 @@ export interface Core {
    */
   createProject: (
     systemInputs: Inputs,
-    ui: UserInterface
+    ui: UserInteraction
   ) => Promise<Result<string, FxError>>;
   /**
    * provision resource to cloud
    */
   provisionResources: (
     systemInputs: Inputs,
-    ui: UserInterface
+    ui: UserInteraction
   ) => Promise<Result<Void, FxError>>;
 
   /**
@@ -38,7 +38,7 @@ export interface Core {
    */
   buildArtifacts: (
     systemInputs: Inputs,
-    ui: UserInterface
+    ui: UserInteraction
   ) => Promise<Result<Void, FxError>>;
 
   /**
@@ -46,7 +46,7 @@ export interface Core {
    */
   deployArtifacts: (
     systemInputs: Inputs,
-    ui: UserInterface
+    ui: UserInteraction
   ) => Promise<Result<Void, FxError>>;
 
   /**
@@ -54,7 +54,7 @@ export interface Core {
    */
   publishApplication: (
     systemInputs: Inputs,
-    ui: UserInterface
+    ui: UserInteraction
   ) => Promise<Result<Void, FxError>>;
 
   /**
@@ -62,7 +62,7 @@ export interface Core {
    */
   createEnv: (
     systemInputs: Inputs,
-    ui: UserInterface
+    ui: UserInteraction
   ) => Promise<Result<Void, FxError>>;
 
   /**
@@ -70,7 +70,7 @@ export interface Core {
    */
   removeEnv: (
     systemInputs: Inputs,
-    ui: UserInterface
+    ui: UserInteraction
   ) => Promise<Result<Void, FxError>>;
 
   /**
@@ -78,13 +78,13 @@ export interface Core {
    */
   switchEnv: (
     systemInputs: Inputs,
-    ui: UserInterface
+    ui: UserInteraction
   ) => Promise<Result<Void, FxError>>;
 
   executeUserTask: (
     func: Func,
     inputs: Inputs,
-    ui: UserInterface
+    ui: UserInteraction
   ) => Promise<Result<unknown, FxError>>;
 
   getProjectConfigs: (

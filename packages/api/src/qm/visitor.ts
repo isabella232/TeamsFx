@@ -14,7 +14,7 @@ import {
 import { getValidationFunction, validate } from "./validation";
 import { returnSystemError, returnUserError } from "../error";
 import { Inputs } from "../types";
-import { InputResult, InputResultType, UserInterface } from "../ui";
+import { InputResult, InputResultType, UserInteraction } from "../ui";
 
 export function isAutoSkipSelect(q: Question): boolean {
   if (q.type === NodeType.singleSelect || q.type === NodeType.multiSelect) {
@@ -63,7 +63,7 @@ export function getSingleOption(q: SingleSelectQuestion | MultiSelectQuestion, o
 
 type QuestionVistor = (
   question: Question,
-  ui: UserInterface,
+  ui: UserInteraction,
   inputs: Inputs ,
   step?: number,
   totalSteps?: number,
@@ -85,11 +85,14 @@ async function getCallFuncValue(inputs: Inputs , raw?: unknown ):Promise<unknown
  */
 const questionVisitor: QuestionVistor = async function (
   question: Question,
-  ui: UserInterface,
+  ui: UserInteraction,
   inputs: Inputs ,
   step?: number,
   totalSteps?: number,
 ): Promise<InputResult> {  
+  if(inputs[question.name] !== undefined) {
+    return { type: InputResultType.sucess, result: inputs[question.name] };
+  }
   if (question.type === NodeType.func) {
     const res = await question.func(inputs);
     return { type: InputResultType.sucess, result: res };
@@ -202,7 +205,7 @@ const questionVisitor: QuestionVistor = async function (
 export async function traverse(
   root: QTreeNode,
   inputs: Inputs ,
-  ui: UserInterface
+  ui: UserInteraction
 ): Promise<InputResult> {
   const stack: QTreeNode[] = [];
   const history: QTreeNode[] = [];
