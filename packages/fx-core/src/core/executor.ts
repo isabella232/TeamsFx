@@ -25,16 +25,15 @@ import {
   ResourceEnvResult,
   ProjectConfigs,
   Func,
-  TeamsSolutionSetting,
   Json,
   StringValidation,
 } from "fx-api";
 import { hooks } from "@feathersjs/hooks";
-import { writeConfigMW } from "./middlewares/config";
+import { ConfigWriterMW } from "./middlewares/config";
 import { projectTypeCheckerMW } from "./middlewares/supportChecker";
 import * as error from "./error";
 import { CoreContext } from "./context";
-import { DefaultSolution } from "../plugins/solution/default";
+import { TeamsSolution, TeamsSolutionSetting } from "../plugins/solution/fx-solution";
 import { deepCopy, initFolder, mergeDict, replaceTemplateVariable } from "./tools";
 import { AppNameQuestion, CoreQuestionNames, QuestionEnvLocal, QuestionEnvName, QuestionEnvSideLoading, QuestionSelectEnv, QuestionSelectSolution, RootFolderQuestion, SampleSelect, ScratchOptionNo, ScratchOptionYes, ScratchOrSampleSelect } from "./question";
 import * as fs from "fs-extra";
@@ -44,7 +43,7 @@ import { QuestionMW } from "./middlewares/question";
 
 export class Executor {
 
-  @hooks([QuestionMW, writeConfigMW])
+  @hooks([QuestionMW, ConfigWriterMW])
   static async createProject( ctx: CoreContext, inputs: Inputs ): Promise<Result<string, FxError>> {
     const appName = inputs[CoreQuestionNames.AppName] as string;
     const folder = inputs[CoreQuestionNames.Folder] as string;
@@ -74,16 +73,14 @@ export class Executor {
     ctx.projectPath = projectPath;
     ctx.projectSetting.name = appName;
     // get solution
-    ctx.solution = new DefaultSolution();
+    ctx.solution = new TeamsSolution();
 
     // build SolutionContext
     const solutionContext:SolutionContext = {
       ...ctx,
       solutionSetting: {
           name: ctx.solution.name, 
-          version: "1.0.0",
-          resources:[],
-          resourceSettings:{}
+          version: "1.0.0"
       }
     };
 
@@ -100,7 +97,7 @@ export class Executor {
     return ok(ctx.projectPath);
   }
    
-  @hooks([projectTypeCheckerMW, writeConfigMW])
+  @hooks([projectTypeCheckerMW, ConfigWriterMW])
   static async provisionResources(ctx: CoreContext, inputs: Inputs): Promise<Result<Void, FxError>> {
     const provisionConfigs = this.getProvisionConfigs(ctx);
     const solutionContext:SolutionEnvContext = this.createSolutionEnvContext(ctx, provisionConfigs);
@@ -120,7 +117,7 @@ export class Executor {
   }
 
   
-  @hooks([projectTypeCheckerMW, writeConfigMW])
+  @hooks([projectTypeCheckerMW, ConfigWriterMW])
   static async buildArtifacts(ctx: CoreContext, inputs: Inputs): Promise<Result<Void, FxError>> {
     const solutionContext:SolutionContext = this.createSolutionContext(ctx);
     ctx.solutionContext = solutionContext;
@@ -129,7 +126,7 @@ export class Executor {
     return ok(Void);
   }
 
-  @hooks([projectTypeCheckerMW, writeConfigMW])
+  @hooks([projectTypeCheckerMW, ConfigWriterMW])
   static async deployArtifacts(ctx: CoreContext, inputs: Inputs): Promise<Result<Void, FxError>> {
     const deployConfigs = this.getDeployConfigs(ctx);
     const solutionContext:SolutionEnvContext = this.createSolutionEnvContext(ctx, deployConfigs);
@@ -147,7 +144,7 @@ export class Executor {
     return res.isOk() ? ok(Void) : err(res.error);
   }
 
-  @hooks([projectTypeCheckerMW, writeConfigMW])
+  @hooks([projectTypeCheckerMW, ConfigWriterMW])
   static async publishApplication(ctx: CoreContext, inputs: Inputs): Promise<Result<Void, FxError>> {
     const solutionContext:SolutionAllContext = this.createSolutionAllContext(ctx);
     ctx.solutionContext = solutionContext;
@@ -248,7 +245,7 @@ export class Executor {
   }
 
 
-  @hooks([projectTypeCheckerMW, writeConfigMW])
+  @hooks([projectTypeCheckerMW, ConfigWriterMW])
   static async executeUserTask( ctx: CoreContext,  func: Func, inputs: Inputs ): Promise<Result<unknown, FxError>> {
     const namespace = func.namespace;
     const array = namespace ? namespace.split("/") : [];
@@ -287,7 +284,7 @@ export class Executor {
   }
   
   
-  @hooks([projectTypeCheckerMW, writeConfigMW])
+  @hooks([projectTypeCheckerMW, ConfigWriterMW])
   static async createEnv(ctx: CoreContext, inputs: Inputs): Promise<Result<Void, FxError>> {
     const EnvName = inputs[CoreQuestionNames.EnvName] as string;
     const EnvLocal = inputs[CoreQuestionNames.EnvLocal] as string;
@@ -301,7 +298,7 @@ export class Executor {
     return err(new UserError("EnvExist", "EnvExist", "core"));
   }
 
-  @hooks([projectTypeCheckerMW, writeConfigMW])
+  @hooks([projectTypeCheckerMW, ConfigWriterMW])
   static async removeEnv( ctx: CoreContext, inputs: Inputs): Promise<Result<Void, FxError>> {
     const EnvName = inputs[CoreQuestionNames.EnvName] as string;
     if(EnvName === ctx.projectSetting.currentEnv)
@@ -315,7 +312,7 @@ export class Executor {
     return err(new UserError("EnvNotExist", "EnvNotExist", "core"));
   }
 
-  @hooks([projectTypeCheckerMW, writeConfigMW])
+  @hooks([projectTypeCheckerMW, ConfigWriterMW])
   static async switchEnv( ctx: CoreContext, inputs: Inputs): Promise<Result<Void, FxError>> {
     const EnvName = inputs[CoreQuestionNames.EnvName] as string;
     const existing = ctx.projectSetting.environments[EnvName];
@@ -328,7 +325,7 @@ export class Executor {
     return err(new UserError("EnvNotExist", "EnvNotExist", "core"));
   }
 
-  @hooks([projectTypeCheckerMW, writeConfigMW])
+  @hooks([projectTypeCheckerMW, ConfigWriterMW])
   static async listEnvs(ctx: CoreContext, inputs: Inputs): Promise<Result<EnvMeta[], FxError>> {
     const list:EnvMeta[] = [];
     for(const k of Object.keys(ctx.projectSetting.environments)){
@@ -376,7 +373,7 @@ export class Executor {
   static createSolutionContext(ctx: CoreContext):SolutionContext{
     const solutionContext:SolutionContext = {
       projectPath: ctx.projectPath,
-      userInterface: ctx.userInterface,
+      userInteraction: ctx.userInteraction,
       logProvider: ctx.logProvider,
       telemetryReporter: ctx.telemetryReporter,
       projectSetting: ctx.projectSetting,

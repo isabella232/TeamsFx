@@ -19,13 +19,14 @@ import {
   Func,
   NodeType,
   SolutionScaffoldResult,
-  TeamsSolutionSetting,
   SystemError,
   err,
   ResourceContext,
   ResourceScaffoldResult,
   MsgLevel,
   CancelError,
+  SolutionSetting,
+  Json,
 } from "fx-api";
 import { TaskGroup } from "../../../core";
 import { FrontendPlugin } from "../../resource/frontend";
@@ -45,9 +46,17 @@ import {
   TabOptionItem,
 } from "./question";
 
-export class DefaultSolution implements SolutionPlugin {
-  name = "fx-solution-default";
-  displayName = "Default Solution";
+export interface TeamsSolutionSetting extends SolutionSetting{
+  hostType: string;
+  capabilities: string[];
+  azureResources: string[];
+  activeResourcePlugins: string[];
+  resourceSettings: Record<string, Json>;
+}
+
+export class TeamsSolution implements SolutionPlugin {
+  name = "fx-solution-azure";
+  displayName = "Teams Solution";
   functionPlugin = new AzureFunctionPlugin();
   frontendPlugin = new FrontendPlugin();
 
@@ -74,17 +83,17 @@ export class DefaultSolution implements SolutionPlugin {
     const task2 = this.frontendPlugin.getScaffoldResourceTemplateTask(resourceContext1, inputs);
     const task3 = this.functionPlugin.getScaffoldSourceCodeTask(resourceContext1, inputs);
     const task4 = this.functionPlugin.getScaffoldResourceTemplateTask(resourceContext2, inputs);
-    const group = new TaskGroup(ctx.userInterface, [task1,task2,task3,task4], true, true);
+    const group = new TaskGroup(ctx.userInteraction, [task1,task2,task3,task4], true, true);
     group.fastFail = true;
     group.name = "DefaultSolution-scaffoldFiles";
-    const confirm = await ctx.userInterface.showMessage(MsgLevel.Info, "Are you sure to create?", true, "Confirm", "ReadMore");
+    const confirm = await ctx.userInteraction.showMessage(MsgLevel.Info, "Are you sure to create?", true, "Confirm", "ReadMore");
     if(confirm === "ReadMore"){
-      ctx.userInterface.openUrl("https://github.com/OfficeDev/TeamsFx");
+      ctx.userInteraction.openUrl("https://github.com/OfficeDev/TeamsFx");
     }
     if(confirm !== "Confirm"){
       return err(CancelError);
     }
-    const result = await ctx.userInterface.runWithProgress(group);
+    const result = await ctx.userInteraction.runWithProgress(group);
     if(result.isOk()){
       const finalResult:SolutionScaffoldResult = {provisionTemplates:{}, deployTemplates:{}};
       const e1:Result<ResourceScaffoldResult,FxError> = result.value[1];
@@ -130,7 +139,7 @@ export class DefaultSolution implements SolutionPlugin {
         }
       } else azureResources = [];
     }
-    const solutionSetting: TeamsSolutionSetting = {
+    const solutionSetting:TeamsSolutionSetting= {
       name: projectSetting.solutionSetting.name,
       version: projectSetting.solutionSetting.version,
       hostType: hostType,
@@ -138,7 +147,7 @@ export class DefaultSolution implements SolutionPlugin {
       azureResources: azureResources || [],
       activeResourcePlugins: [],
       resourceSettings:{}
-    };
+    }
     projectSetting.solutionSetting = solutionSetting;
     return ok(solutionSetting);
   }

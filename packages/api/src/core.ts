@@ -15,6 +15,7 @@ import {
 } from "./index";
 
 export interface Core {
+  
   init: (systemInputs: Inputs) => Promise<Result<Void, FxError>>;
 
   /**
@@ -25,57 +26,37 @@ export interface Core {
     systemInputs: Inputs,
     ui: UserInteraction
   ) => Promise<Result<string, FxError>>;
-  /**
-   * provision resource to cloud
-   */
+  
   provisionResources: (
     systemInputs: Inputs,
     ui: UserInteraction
   ) => Promise<Result<Void, FxError>>;
-
-  /**
-   * build artifacts
-   */
+ 
   buildArtifacts: (
     systemInputs: Inputs,
     ui: UserInteraction
   ) => Promise<Result<Void, FxError>>;
-
-  /**
-   * deploy resource to cloud
-   */
+ 
   deployArtifacts: (
     systemInputs: Inputs,
     ui: UserInteraction
   ) => Promise<Result<Void, FxError>>;
-
-  /**
-   * publish app
-   */
+ 
   publishApplication: (
     systemInputs: Inputs,
     ui: UserInteraction
   ) => Promise<Result<Void, FxError>>;
-
-  /**
-   * create an environment
-   */
+ 
   createEnv: (
     systemInputs: Inputs,
     ui: UserInteraction
   ) => Promise<Result<Void, FxError>>;
-
-  /**
-   * remove an environment
-   */
+ 
   removeEnv: (
     systemInputs: Inputs,
     ui: UserInteraction
   ) => Promise<Result<Void, FxError>>;
-
-  /**
-   * switch environment
-   */
+ 
   switchEnv: (
     systemInputs: Inputs,
     ui: UserInteraction

@@ -50,7 +50,7 @@ export const QuestionMW: Middleware = async (
 
   const node = getQuestionRes.value;
   if (node) {
-    const res: InputResult = await traverse(node, inputs, coreCtx.userInterface);
+    const res: InputResult = await traverse(node, inputs, coreCtx.userInteraction);
     if (res.type === InputResultType.error) {
       ctx.result = err(res.error!);
       return;

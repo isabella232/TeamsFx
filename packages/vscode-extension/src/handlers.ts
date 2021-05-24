@@ -91,7 +91,7 @@ export async function activate(context: ExtensionContext): Promise<Result<Void, 
       },
       telemetryReporter: telemetry,
       treeProvider:CommandsTreeViewProvider.getInstance(),
-      userInterface: VS_CODE_UI
+      userInteraction: VS_CODE_UI
     };
     core = new FxCore(tools); 
     const workspacePath: string | undefined = workspace.workspaceFolders?.length? workspace.workspaceFolders[0].uri.fsPath : undefined;

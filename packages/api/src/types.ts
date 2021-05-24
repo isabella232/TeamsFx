@@ -43,13 +43,7 @@ export interface SolutionSetting extends Json{
     version?:string;
 }
  
-export interface TeamsSolutionSetting extends SolutionSetting{
-    hostType: string;
-    capabilities: string[];
-    azureResources: string[];
-    activeResourcePlugins: string[];
-    resourceSettings: Record<string, Json>;
-}
+
  
 export interface ProjectState extends Json{
     resourceStates: Record<string, Json>;
@@ -65,7 +59,7 @@ export interface Context {
      
     projectPath: string;
  
-    userInterface: UserInteraction;
+    userInteraction: UserInteraction;
  
     logProvider: LogProvider;
  

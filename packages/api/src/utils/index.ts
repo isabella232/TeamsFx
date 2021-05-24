@@ -20,7 +20,7 @@ export interface Tools
     tokenProvider: TokenProvider;
     telemetryReporter: TelemetryReporter;
     treeProvider: TreeProvider;
-    userInterface: UserInteraction;
+    userInteraction: UserInteraction;
 }
 
 export const CancelError:UserError = new UserError("UserCancel", "UserCancel", "UI");
