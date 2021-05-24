@@ -7,6 +7,7 @@ import { StaticOptions } from "./question";
 
 
 export interface UIConfig{
+  name: string;
   title: string,
   placeholder?: string;
   prompt?:string;

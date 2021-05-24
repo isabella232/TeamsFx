@@ -104,6 +104,7 @@ const questionVisitor: QuestionVistor = async function (
     if (question.type === NodeType.text) {
       const inputQuestion = question as TextInputQuestion;
       return await ui.inputText({
+        name: question.name,
         title: question.title,
         password: (inputQuestion as TextInputQuestion).password,
         default: defaultValue as string,
@@ -136,6 +137,7 @@ const questionVisitor: QuestionVistor = async function (
       }
       if(question.type === NodeType.singleSelect){
         return await ui.selectOption({
+          name: question.name,
           title: question.title,
           options: res.options,
           returnObject: selectQuestion.returnObject,
@@ -149,6 +151,7 @@ const questionVisitor: QuestionVistor = async function (
       else {
         const mq = selectQuestion as MultiSelectQuestion;
         return await ui.selectOptions({
+          name: question.name,
           title: question.title,
           options: res.options,
           returnObject: selectQuestion.returnObject,
@@ -163,6 +166,7 @@ const questionVisitor: QuestionVistor = async function (
       }
     } else if (question.type === NodeType.multiFile) {
       return await ui.selectFiles({
+        name: question.name,
         title: question.title,
         placeholder: placeholder,
         prompt: prompt,
@@ -172,6 +176,7 @@ const questionVisitor: QuestionVistor = async function (
       });
     } else if(question.type === NodeType.singleFile ){
       return await ui.selectFile({
+        name: question.name,
         title: question.title,
         placeholder: placeholder,
         prompt: prompt,
@@ -182,6 +187,7 @@ const questionVisitor: QuestionVistor = async function (
       });
     } else if(question.type === NodeType.folder){
       return await ui.selectFolder({
+        name: question.name,
         title: question.title,
         placeholder: placeholder,
         prompt: prompt,
