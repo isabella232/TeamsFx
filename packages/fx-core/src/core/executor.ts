@@ -14,7 +14,7 @@ import {
   SingleSelectQuestion,
   ConfigFolderName,
   Inputs,
-  SolutionContext,
+  SolutionProvisionContext,
   Void,
   EnvMeta,
   SolutionEnvContext,
@@ -22,7 +22,7 @@ import {
   SolutionAllContext,
   FunctionRouter,
   SolutionScaffoldResult,
-  ResourceEnvResult,
+  SolutionProvisionResult,
   ProjectConfigs,
   Func,
   Json,
@@ -76,7 +76,7 @@ export class Executor {
     ctx.solution = new TeamsSolution();
 
     // build SolutionContext
-    const solutionContext:SolutionContext = {
+    const solutionContext:SolutionProvisionContext = {
       ...ctx,
       solutionSetting: {
           name: ctx.solution.name, 
@@ -101,10 +101,9 @@ export class Executor {
   static async provisionResources(ctx: CoreContext, inputs: Inputs): Promise<Result<Void, FxError>> {
     const provisionConfigs = this.getProvisionConfigs(ctx);
     const solutionContext:SolutionEnvContext = this.createSolutionEnvContext(ctx, provisionConfigs);
-    ctx.solutionContext = solutionContext;
     await new Promise(resolve => setTimeout(resolve, 5000));
     const res = await ctx.solution!.provisionResources(solutionContext, inputs);
-    let result:ResourceEnvResult|undefined;
+    let result:SolutionProvisionResult|undefined;
     if(res.isOk()){
       result = res.value;
     }
@@ -113,13 +112,14 @@ export class Executor {
     }
     ctx.resourceInstanceValues = mergeDict(ctx.resourceInstanceValues, result.resourceValues);
     ctx.stateValues = mergeDict(ctx.stateValues, result.stateValues);
+    ctx.solutionContext = solutionContext;
     return res.isOk() ? ok(Void) : err(res.error);
   }
 
   
   @hooks([projectTypeCheckerMW, ConfigWriterMW])
   static async buildArtifacts(ctx: CoreContext, inputs: Inputs): Promise<Result<Void, FxError>> {
-    const solutionContext:SolutionContext = this.createSolutionContext(ctx);
+    const solutionContext:SolutionProvisionContext = this.createSolutionContext(ctx);
     ctx.solutionContext = solutionContext;
     const res = await ctx.solution!.buildArtifacts(solutionContext, inputs);
     if(res.isErr()) return err(res.error);
@@ -132,7 +132,7 @@ export class Executor {
     const solutionContext:SolutionEnvContext = this.createSolutionEnvContext(ctx, deployConfigs);
     ctx.solutionContext = solutionContext;
     const res = await ctx.solution!.deployArtifacts(solutionContext, inputs);
-    let result:ResourceEnvResult|undefined;
+    let result:SolutionProvisionResult|undefined;
     if(res.isOk()){
       result = res.value;
     }
@@ -370,8 +370,8 @@ export class Executor {
     return deployConfigs;
   }
  
-  static createSolutionContext(ctx: CoreContext):SolutionContext{
-    const solutionContext:SolutionContext = {
+  static createSolutionContext(ctx: CoreContext):SolutionProvisionContext{
+    const solutionContext:SolutionProvisionContext = {
       projectPath: ctx.projectPath,
       userInteraction: ctx.userInteraction,
       logProvider: ctx.logProvider,

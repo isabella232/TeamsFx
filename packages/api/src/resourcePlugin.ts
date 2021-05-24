@@ -12,7 +12,7 @@ import {
   Task,
   TokenProvider,
   Void,
-  ResourceEnvResult,
+  SolutionProvisionResult,
   Func,
   Json,
   TimeConsumingTask,
@@ -80,7 +80,7 @@ export interface ResourcePlugin {
   provisionResource?: (
     ctx: ResourceEnvContext,
     inputs: Inputs
-  ) => Promise<Result<ResourceEnvResult, FxError>>;
+  ) => Promise<Result<SolutionProvisionResult, FxError>>;
 
   configureResource?: (
     ctx: ResourceConfigureContext
@@ -94,12 +94,12 @@ export interface ResourcePlugin {
   deployArtifacts?: (
     ctx: ResourceEnvContext,
     inputs: Inputs
-  ) => Promise<Result<ResourceEnvResult, FxError>>;
+  ) => Promise<Result<SolutionProvisionResult, FxError>>;
 
   publishApplication?: (
     ctx: ResourcePublishContext,
     inputs: Inputs
-  ) => Promise<Result<ResourceEnvResult, FxError>>;
+  ) => Promise<Result<SolutionProvisionResult, FxError>>;
 
   /**
    * get question model for lifecycle {@link Task} (create, provision, deploy, publish), Questions are organized as a tree. Please check {@link QTreeNode}.

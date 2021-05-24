@@ -10,12 +10,12 @@ import {
   QTreeNode,
   Result,
   SolutionAllContext,
-  SolutionContext,
+  SolutionProvisionContext,
   SolutionEnvContext,
   SolutionPlugin,
   Task,
   Void,
-  ResourceEnvResult,
+  SolutionProvisionResult,
   Func,
   NodeType,
   SolutionScaffoldResult,
@@ -61,7 +61,7 @@ export class TeamsSolution implements SolutionPlugin {
   frontendPlugin = new FrontendPlugin();
 
   async scaffoldFiles(
-    ctx: SolutionContext,
+    ctx: SolutionProvisionContext,
     inputs: Inputs
   ): Promise<Result<SolutionScaffoldResult, FxError>> {
     const solutionSettingRes = this.fillInSolutionSettings(ctx, inputs);
@@ -114,7 +114,7 @@ export class TeamsSolution implements SolutionPlugin {
       return err(result.error);
     }
   }
-  fillInSolutionSettings(ctx: SolutionContext, inputs: Inputs): Result<TeamsSolutionSetting, FxError> {
+  fillInSolutionSettings(ctx: SolutionProvisionContext, inputs: Inputs): Result<TeamsSolutionSetting, FxError> {
     const projectSetting = ctx.projectSetting;
     const capabilities = inputs[SolutionQuestionNames.Capabilities] as string[] || [];
     if (!capabilities || capabilities.length === 0) {
@@ -153,7 +153,7 @@ export class TeamsSolution implements SolutionPlugin {
   }
 
   async buildArtifacts(
-    ctx: SolutionContext,
+    ctx: SolutionProvisionContext,
     inputs: Inputs
   ): Promise<Result<Void, FxError>> {
     ctx.projectState.build = true;
@@ -163,7 +163,7 @@ export class TeamsSolution implements SolutionPlugin {
     ctx: SolutionEnvContext,
     inputs: Inputs
   ): Promise<
-    Result<ResourceEnvResult, FxError & { result: ResourceEnvResult }>
+    Result<SolutionProvisionResult, FxError & { result: SolutionProvisionResult }>
   > {
     ctx.logProvider.info(
       `[solution] provision resource configs: ${JSON.stringify(
@@ -183,7 +183,7 @@ export class TeamsSolution implements SolutionPlugin {
     ctx: SolutionEnvContext,
     inputs: Inputs
   ): Promise<
-    Result<ResourceEnvResult, FxError & { result: ResourceEnvResult }>
+    Result<SolutionProvisionResult, FxError & { result: SolutionProvisionResult }>
   > {
     ctx.logProvider.info(
       `[solution] deploy resource configs: ${JSON.stringify(
@@ -202,7 +202,7 @@ export class TeamsSolution implements SolutionPlugin {
   async publishApplication(
     ctx: SolutionAllContext,
     inputs: Inputs
-  ): Promise<Result<ResourceEnvResult, FxError>> {
+  ): Promise<Result<SolutionProvisionResult, FxError>> {
     ctx.logProvider.info(
       `[solution] publish provisionConfigs: ${JSON.stringify(
         ctx.provisionConfigs
@@ -216,7 +216,7 @@ export class TeamsSolution implements SolutionPlugin {
   }
 
   async getTabScaffoldQuestions(
-    ctx: SolutionContext,
+    ctx: SolutionProvisionContext,
     addAzureResource: boolean
   ): Promise<Result<QTreeNode | undefined, FxError>> {
     const tabNode = new QTreeNode({ type: NodeType.group });

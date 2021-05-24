@@ -4,7 +4,7 @@
 import {
   Context,
   Json,
-  SolutionContext,
+  SolutionProvisionContext,
   SolutionPlugin,
   TokenProvider,
 } from "fx-api";
@@ -24,5 +24,5 @@ export interface CoreContext extends Context {
 
   tokenProvider: TokenProvider;
 
-  solutionContext?: SolutionContext;
+  solutionContext?: SolutionProvisionContext;
 }

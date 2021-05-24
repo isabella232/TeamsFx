@@ -23,30 +23,21 @@ export interface EnvMeta{
 export type Json = Record<string,unknown>;
 
 /**
- * project static settings
+ * project static setting
  */
 export interface ProjectSetting extends Json{
     name:string,
-    solutionSetting:SolutionSetting;
-    environments: {
-        [k : string] : EnvMeta;
-    };
+    environments: Record<string,EnvMeta>;
     currentEnv: string;
+    solution: {
+      name: string,
+      version?:string,
+    }
+    solutionSetting:Json;
 }
 
-
-/**
- * solution settings
- */
-export interface SolutionSetting extends Json{  
-    name:string;
-    version?:string;
-}
- 
-
- 
 export interface ProjectState extends Json{
-    resourceStates: Record<string, Json>;
+  solutionState: Json;
 }
 
 export interface Inputs extends Json{
@@ -56,23 +47,11 @@ export interface Inputs extends Json{
 }    
   
 export interface Context {
-     
     projectPath: string;
- 
     userInteraction: UserInteraction;
- 
     logProvider: LogProvider;
- 
     telemetryReporter: TelemetryReporter;
-
-    /**
-     * Static setting
-     */
     projectSetting: ProjectSetting; 
-
-    /**
-     * Dynamic state
-     */
     projectState: ProjectState;
 }
  

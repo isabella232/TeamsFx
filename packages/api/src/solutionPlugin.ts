@@ -3,27 +3,23 @@
 "use strict";
 
 import { Result } from "neverthrow";  
-import { Context, SolutionSetting, EnvMeta, FunctionRouter, FxError, Inputs, QTreeNode, Task, TokenProvider, Void, Func, ProjectState, Json } from "./index";
+import { Context, EnvMeta, FunctionRouter, FxError, Inputs, QTreeNode, Task, TokenProvider, Func, Json } from "./index";
 
-
-
-export interface SolutionContext extends Context{
-    solutionSetting: SolutionSetting;
-}
-
-
-export interface SolutionEnvContext  extends SolutionContext {
+ 
+export interface SolutionProvisionContext extends Context {
     env: EnvMeta;
     tokenProvider: TokenProvider;
     resourceConfigs: Record<string, Json>;
 }
 
+export type SolutionDeployContext = SolutionProvisionContext;
+ 
 export interface SolutionScaffoldResult{
-    provisionTemplates:Record<string, Json>;
-    deployTemplates: Record<string, Json>;
+  provisionTemplates:Record<string, Json>;
+  deployTemplates: Record<string, Json>;
 }
  
-export interface SolutionAllContext extends SolutionContext {
+export interface SolutionAllContext extends Context {
     env: EnvMeta;
     tokenProvider: TokenProvider;
     provisionConfigs?: Record<string, Json>;
@@ -31,9 +27,10 @@ export interface SolutionAllContext extends SolutionContext {
 }
 
 
-export interface ResourceEnvResult {
-    resourceValues: Record<string, string>;
-    stateValues: Record<string, string>;
+export interface SolutionProvisionResult{
+  resourceValues: Record<string, string>;
+  stateValues: Record<string, string>;
+  solutionState: Json;
 }
  
 
@@ -42,28 +39,16 @@ export interface SolutionPlugin {
     name:string,
     
     displayName:string,
-
-    /**
-     * scaffold a project and return solution config template
-     */
-    scaffoldFiles: (ctx: SolutionContext, inputs: Inputs) => Promise<Result<SolutionScaffoldResult, FxError>>;
-
-    /**
-     * build
-     */
-    buildArtifacts: (ctx: SolutionContext, inputs: Inputs) => Promise<Result<Void, FxError>>;
-
-    /**
-     * provision will output VariableDict even error happends
-     */
-    provisionResources: (ctx: SolutionEnvContext, inputs: Inputs) => Promise<Result<ResourceEnvResult, FxError & {result:ResourceEnvResult}>>;
-
-    /**
-     * deploy will output VariableDict even error happends
-     */
-    deployArtifacts: (ctx: SolutionEnvContext, inputs: Inputs) => Promise<Result<ResourceEnvResult, FxError & {result:ResourceEnvResult}>>;
+ 
+    scaffoldFiles: (ctx: Context, inputs: Inputs) => Promise<Result<SolutionScaffoldResult, FxError>>;
+ 
+    buildArtifacts: (ctx: Context, inputs: Inputs) => Promise<Result<undefined, FxError>>;
+ 
+    provisionResources: (ctx: SolutionProvisionContext, inputs: Inputs) => Promise<Result<SolutionProvisionResult, FxError>>;
+ 
+    deployArtifacts: (ctx: SolutionDeployContext, inputs: Inputs) => Promise<Result<SolutionProvisionResult, FxError>>;
   
-    publishApplication: (ctx: SolutionAllContext, inputs: Inputs) => Promise<Result<ResourceEnvResult, FxError>>;
+    publishApplication: (ctx: SolutionAllContext, inputs: Inputs) => Promise<Result<SolutionProvisionResult, FxError>>;
     /**
      * get question model for lifecycle {@link Task} (create, provision, deploy, publish), Questions are organized as a tree. Please check {@link QTreeNode}.
      */

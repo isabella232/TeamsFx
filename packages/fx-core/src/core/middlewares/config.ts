@@ -27,6 +27,7 @@ export const ConfigWriterMW: Middleware = async (
 
       if(coreCtx.solutionContext){
         coreCtx.projectSetting.solutionSetting = coreCtx.solutionContext.solutionSetting;
+        coreCtx.projectSetting.solutionSetting = coreCtx.solutionContext.solutionSetting;
       }
      
       try { 
