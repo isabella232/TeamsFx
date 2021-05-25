@@ -1,6 +1,5 @@
 // Copyright (c) Microsoft Corporation.
-// Licensed under the MIT license.
-"use strict";
+// Licensed under the MIT license. 
 
 import { Inputs } from "../types";
 import { FuncValidation, StringArrayValidation, StringValidation, ValidationSchema } from "./validation";

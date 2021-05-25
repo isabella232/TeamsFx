@@ -10,12 +10,13 @@ import {
   Task,
   Void,
   Func,
-  Inputs
+  Inputs,
+  Tools
 } from "./index";
 
 export interface Core {
 
-  init: (systemInputs: Inputs) => Promise<Result<Void, FxError>>;
+  init: (tools:Tools) => Promise<Result<Void, FxError>>;
 
   /**
    * create a project, return the project path
@@ -38,9 +39,6 @@ export interface Core {
   switchEnv: ( systemInputs: Inputs ) => Promise<Result<Void, FxError>>;
 
   executeUserTask: ( func: Func, inputs: Inputs ) => Promise<Result<unknown, FxError>>;
-
-  getProjectConfigs: ( systemInputs: Inputs ) => Promise<Result<ProjectConfigs, FxError>>;
-
   /**
    * only for CLI
    */
