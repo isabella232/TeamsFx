@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { groupCollapsed } from "console";
 import {
   FunctionRouter,
   FxError,
@@ -9,9 +8,7 @@ import {
   ok,
   QTreeNode,
   Result,
-  SolutionAllContext,
   SolutionProvisionContext,
-  SolutionEnvContext,
   SolutionPlugin,
   Task,
   Void,
@@ -21,12 +18,15 @@ import {
   SolutionScaffoldResult,
   SystemError,
   err,
-  ResourceContext,
-  ResourceScaffoldResult,
+  ResourceProvisionContext,
   MsgLevel,
   CancelError,
   SolutionSetting,
-  Json,
+  Context,
+  ResourceScaffoldResult,
+  FunctionGroupTask,
+  SolutionDeployContext,
+  SolutionPublishContext,
 } from "fx-api";
 import { TaskGroup } from "../../../core";
 import { FrontendPlugin } from "../../resource/frontend";
@@ -50,8 +50,6 @@ export interface TeamsSolutionSetting extends SolutionSetting{
   hostType: string;
   capabilities: string[];
   azureResources: string[];
-  activeResourcePlugins: string[];
-  resourceSettings: Record<string, Json>;
 }
 
 export class TeamsSolution implements SolutionPlugin {
@@ -61,31 +59,25 @@ export class TeamsSolution implements SolutionPlugin {
   frontendPlugin = new FrontendPlugin();
 
   async scaffoldFiles(
-    ctx: SolutionProvisionContext,
+    ctx: Context,
     inputs: Inputs
   ): Promise<Result<SolutionScaffoldResult, FxError>> {
-    const solutionSettingRes = this.fillInSolutionSettings(ctx, inputs);
+    
+    const solutionSettingRes = this.createSolutionSettings(inputs);
     if(solutionSettingRes.isErr()) return err(solutionSettingRes.error);
     const solutionSetting = solutionSettingRes.value;
-    solutionSetting.activeResourcePlugins = ["fx-resource-frontend", "fx-resource-function"];
-    ctx.solutionSetting = solutionSetting;
-    const resourceContext1 : ResourceContext = {
-      ...ctx,
-      resourceSetting: solutionSetting.resourceSettings["fx-resource-frontend"],
-      resourceState: {}
-    };
-    const resourceContext2 : ResourceContext = {
-      ...ctx,
-      resourceSetting: solutionSetting.resourceSettings["fx-resource-function"],
-      resourceState: {}
-    };
-    const task1 = this.frontendPlugin.getScaffoldSourceCodeTask(resourceContext1, inputs);
-    const task2 = this.frontendPlugin.getScaffoldResourceTemplateTask(resourceContext1, inputs);
-    const task3 = this.functionPlugin.getScaffoldSourceCodeTask(resourceContext1, inputs);
-    const task4 = this.functionPlugin.getScaffoldResourceTemplateTask(resourceContext2, inputs);
-    const group = new TaskGroup(ctx.userInteraction, [task1,task2,task3,task4], true, true);
-    group.fastFail = true;
-    group.name = "DefaultSolution-scaffoldFiles";
+    ctx.projectSetting.solutionSetting = solutionSetting;
+
+    solutionSetting.resourcePlugins = ["fx-resource-frontend", "fx-resource-function"];
+
+    const task1 = async (): Promise<Result<Void,FxError>> =>{ await this.frontendPlugin.scaffoldSourceCode(ctx, inputs); return ok(Void);} ;
+    const task2 = async (): Promise<Result<Void,FxError>> =>{ await this.functionPlugin.scaffoldSourceCode(ctx, inputs); return ok(Void);} ;  
+    const task3 = async (): Promise<Result<ResourceScaffoldResult,FxError>> =>{ return await this.frontendPlugin.scaffoldResourceTemplate(ctx, inputs);};
+    const task4 = async (): Promise<Result<ResourceScaffoldResult,FxError>> =>{ return await this.functionPlugin.scaffoldResourceTemplate(ctx, inputs);}; 
+    const group = new FunctionGroupTask({name: "provision", 
+                tasks:[task1,task2,task3,task4], 
+                taskNames: ["frontendPlugin.scaffoldSourceCode", "functionPlugin.scaffoldSourceCode", "frontendPlugin.scaffoldResourceTemplate", ""], 
+                cancelable: true, concurrent: false, fastFail:true});
     const confirm = await ctx.userInteraction.showMessage(MsgLevel.Info, "Are you sure to create?", true, "Confirm", "ReadMore");
     if(confirm === "ReadMore"){
       ctx.userInteraction.openUrl("https://github.com/OfficeDev/TeamsFx");
@@ -96,17 +88,17 @@ export class TeamsSolution implements SolutionPlugin {
     const result = await ctx.userInteraction.runWithProgress(group);
     if(result.isOk()){
       const finalResult:SolutionScaffoldResult = {provisionTemplates:{}, deployTemplates:{}};
-      const e1:Result<ResourceScaffoldResult,FxError> = result.value[1];
+      const e1:Result<ResourceScaffoldResult,FxError> = result.value[2];
       const e2:Result<ResourceScaffoldResult,FxError> = result.value[3];
       if(e1.isOk()){
         const sr = e1.value;
-        finalResult.provisionTemplates["fx-resource-frontend"] = sr.provision;
-        finalResult.deployTemplates["fx-resource-frontend"] = sr.provision;
+        finalResult.provisionTemplates["fx-resource-frontend"] = sr.provisionTemplate;
+        finalResult.deployTemplates["fx-resource-frontend"] = sr.deployTemplate;
       }
       if(e2.isOk()){
         const sr = e2.value;
-        finalResult.provisionTemplates["fx-resource-function"] = sr.provision;
-        finalResult.deployTemplates["fx-resource-function"] = sr.provision;
+        finalResult.provisionTemplates["fx-resource-function"] = sr.provisionTemplate;
+        finalResult.deployTemplates["fx-resource-function"] = sr.deployTemplate;
       }
       return ok(finalResult);
     }
@@ -114,8 +106,7 @@ export class TeamsSolution implements SolutionPlugin {
       return err(result.error);
     }
   }
-  fillInSolutionSettings(ctx: SolutionProvisionContext, inputs: Inputs): Result<TeamsSolutionSetting, FxError> {
-    const projectSetting = ctx.projectSetting;
+  createSolutionSettings(inputs: Inputs): Result<TeamsSolutionSetting, FxError> {
     const capabilities = inputs[SolutionQuestionNames.Capabilities] as string[] || [];
     if (!capabilities || capabilities.length === 0) {
       return err( new SystemError("InvalidInput", "Invalid capabilities", "Solution"));
@@ -140,30 +131,19 @@ export class TeamsSolution implements SolutionPlugin {
       } else azureResources = [];
     }
     const solutionSetting:TeamsSolutionSetting= {
-      name: projectSetting.solutionSetting.name,
-      version: projectSetting.solutionSetting.version,
       hostType: hostType,
       capabilities: capabilities,
       azureResources: azureResources || [],
-      activeResourcePlugins: [],
-      resourceSettings:{}
-    }
-    projectSetting.solutionSetting = solutionSetting;
+      resourcePlugins: []
+    };
     return ok(solutionSetting);
   }
 
-  async buildArtifacts(
-    ctx: SolutionProvisionContext,
-    inputs: Inputs
-  ): Promise<Result<Void, FxError>> {
+  async buildArtifacts(  ctx: Context,  inputs: Inputs ): Promise<Result<Void, FxError>> {
     ctx.projectState.build = true;
     return ok(Void);
   }
-  async provisionResources(
-    ctx: SolutionEnvContext,
-    inputs: Inputs
-  ): Promise<
-    Result<SolutionProvisionResult, FxError & { result: SolutionProvisionResult }>
+  async provisionResources( ctx: SolutionProvisionContext,  inputs: Inputs ): Promise< Result<SolutionProvisionResult, FxError & { result: SolutionProvisionResult }>
   > {
     ctx.logProvider.info(
       `[solution] provision resource configs: ${JSON.stringify(
@@ -179,12 +159,7 @@ export class TeamsSolution implements SolutionPlugin {
       },
     });
   }
-  async deployArtifacts(
-    ctx: SolutionEnvContext,
-    inputs: Inputs
-  ): Promise<
-    Result<SolutionProvisionResult, FxError & { result: SolutionProvisionResult }>
-  > {
+  async deployArtifacts(  ctx: SolutionDeployContext, inputs: Inputs  ): Promise< Result<SolutionProvisionResult, FxError & { result: SolutionProvisionResult }> > {
     ctx.logProvider.info(
       `[solution] deploy resource configs: ${JSON.stringify(
         ctx.resourceConfigs
@@ -199,10 +174,7 @@ export class TeamsSolution implements SolutionPlugin {
       },
     });
   }
-  async publishApplication(
-    ctx: SolutionAllContext,
-    inputs: Inputs
-  ): Promise<Result<SolutionProvisionResult, FxError>> {
+  async publishApplication( ctx: SolutionPublishContext, inputs: Inputs ): Promise<Result<Void, FxError>> {
     ctx.logProvider.info(
       `[solution] publish provisionConfigs: ${JSON.stringify(
         ctx.provisionConfigs
@@ -216,7 +188,7 @@ export class TeamsSolution implements SolutionPlugin {
   }
 
   async getTabScaffoldQuestions(
-    ctx: SolutionProvisionContext,
+    ctx: Context,
     addAzureResource: boolean
   ): Promise<Result<QTreeNode | undefined, FxError>> {
     const tabNode = new QTreeNode({ type: NodeType.group });
@@ -263,11 +235,7 @@ export class TeamsSolution implements SolutionPlugin {
     return ok(tabNode);
   }
 
-  async getQuestionsForLifecycleTask(
-    ctx: SolutionAllContext,
-    task: Task,
-    inputs: Inputs
-  ): Promise<Result<QTreeNode | undefined, FxError>> {
+  async getQuestionsForLifecycleTask (task: Task, inputs: Inputs, ctx?: Context) : Promise<Result<QTreeNode|undefined, FxError>>{
     if (task === Task.create) {
       const node = new QTreeNode({ type: NodeType.group });
       // 1. capabilities
@@ -325,18 +293,10 @@ export class TeamsSolution implements SolutionPlugin {
     return ok(undefined);
   }
 
-  async getQuestionsForUserTask(
-    ctx: SolutionAllContext,
-    router: FunctionRouter,
-    inputs: Inputs
-  ): Promise<Result<QTreeNode | undefined, FxError>> {
+  async getQuestionsForUserTask(router: FunctionRouter, inputs: Inputs, ctx?: Context) : Promise<Result<QTreeNode|undefined, FxError>>{
     return ok(undefined);
   }
-  async executeUserTask(
-    ctx: SolutionAllContext,
-    func: Func,
-    inputs: Inputs
-  ): Promise<Result<unknown, FxError>> {
+  async executeUserTask(func:Func, inputs: Inputs, ctx?: Context) : Promise<Result<unknown, FxError>>{
     return ok(Void);
   }
 }

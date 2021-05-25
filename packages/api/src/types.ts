@@ -33,7 +33,11 @@ export interface ProjectSetting extends Json{
       name: string,
       version?:string,
     }
-    solutionSetting:Json;
+    solutionSetting:SolutionSetting;
+}
+
+export interface SolutionSetting extends Json{
+    resourcePlugins:string[];
 }
 
 export interface ProjectState extends Json{

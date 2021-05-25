@@ -12,119 +12,69 @@ import {
   Task,
   TokenProvider,
   Void,
-  SolutionProvisionResult,
   Func,
   Json,
   TimeConsumingTask,
 } from "./index";
 
-export interface ResourceContext extends Context {
-  resourceSetting: Json;
-  resourceState: Json;
-}
-
 export interface ResourceScaffoldResult {
-  provision: Json;
-  deploy: Json;
+  provisionTemplate: Json;
+  deployTemplate: Json;
 }
 
-export interface ResourceEnvContext extends ResourceContext {
+export interface ResourceProvisionContext extends Context {
   envMeta: EnvMeta;
   tokenProvider: TokenProvider;
-  commonConfig: Json;
-  selfConfig: Json;
+  solutionConfig: Json;
+  resourceConfig: Json;
 }
 
-export interface ResourceConfigureContext extends ResourceEnvContext {
-  allProvisionConfigs: Record<string, Json>;
+export type ResourceDeployContext = ResourceProvisionContext;
+ 
+export interface ResourceConfigureContext extends ResourceProvisionContext {
+  provisionConfigs: Record<string, Json>;
 }
 
-export interface ResourceAllContext extends ResourceContext {
+export interface ResourceAllContext extends Context {
   envMeta: EnvMeta;
   tokenProvider: TokenProvider;
   provisionConfig?: Json;
   deployConfig?: Json;
 }
 
-export interface ResourcePublishContext extends ResourceContext {
+export interface ResourcePublishContext extends Context {
   envMeta: EnvMeta;
   tokenProvider: TokenProvider;
   manifest: Json;
 }
 
-export interface ResourcePlugin {
-  name: string;
+export interface ResourceProvisionResult{
+  resourceValues: Record<string, string>;
+  stateValues: Record<string, string>;
+} 
 
+export interface ResourcePlugin {
+
+  name: string;
   displayName: string;
 
-  getScaffoldSourceCodeTask? (
-    ctx: ResourceContext,
-    inputs: Inputs
-  ) : TimeConsumingTask<Result<Void, FxError>>;
+  scaffoldSourceCode?: ( ctx: Context,  inputs: Inputs ) => Promise<Result<Void, FxError>>;
 
-  scaffoldSourceCode?: (
-    ctx: ResourceContext,
-    inputs: Inputs
-  ) => Promise<Result<Void, FxError>>;
+  scaffoldResourceTemplate?: ( ctx: Context,  inputs: Inputs ) => Promise<Result<ResourceScaffoldResult, FxError>>;
 
-  scaffoldResourceTemplate?: (
-    ctx: ResourceContext,
-    inputs: Inputs
-  ) => Promise<Result<ResourceScaffoldResult, FxError>>;
+  provisionResource?: ( ctx: ResourceProvisionContext, inputs: Inputs ) => Promise<Result<ResourceProvisionResult, FxError>>;
 
-  getScaffoldResourceTemplateTask?(
-    ctx: ResourceContext,
-    inputs: Inputs
-  ) : TimeConsumingTask<Result<ResourceScaffoldResult, FxError>>;
+  configureResource?: ( ctx: ResourceConfigureContext ) => Promise<Result<Void, FxError>>;
 
-  provisionResource?: (
-    ctx: ResourceEnvContext,
-    inputs: Inputs
-  ) => Promise<Result<SolutionProvisionResult, FxError>>;
+  buildArtifacts?: ( ctx: Context, inputs: Inputs ) => Promise<Result<Void, FxError>>;
 
-  configureResource?: (
-    ctx: ResourceConfigureContext
-  ) => Promise<Result<Void, FxError>>;
+  deployArtifacts?: ( ctx: ResourceDeployContext, inputs: Inputs ) => Promise<Result<Void, FxError>>;
 
-  buildArtifacts?: (
-    ctx: ResourceContext,
-    inputs: Inputs
-  ) => Promise<Result<Void, FxError>>;
+  publishApplication?: ( ctx: ResourcePublishContext,  inputs: Inputs ) => Promise<Result<Void, FxError>>;
 
-  deployArtifacts?: (
-    ctx: ResourceEnvContext,
-    inputs: Inputs
-  ) => Promise<Result<SolutionProvisionResult, FxError>>;
+  getQuestionsForLifecycleTask?: (ask: Task, inputs: Inputs,  ctx?: Context ) => Promise<Result<QTreeNode | undefined, FxError>>;
 
-  publishApplication?: (
-    ctx: ResourcePublishContext,
-    inputs: Inputs
-  ) => Promise<Result<SolutionProvisionResult, FxError>>;
+  getQuestionsForUserTask?: ( router: FunctionRouter, inputs: Inputs, ctx?: Context) => Promise<Result<QTreeNode | undefined, FxError>>;
 
-  /**
-   * get question model for lifecycle {@link Task} (create, provision, deploy, publish), Questions are organized as a tree. Please check {@link QTreeNode}.
-   */
-  getQuestionsForLifecycleTask?: (
-    ctx: ResourceAllContext,
-    task: Task,
-    inputs: Inputs
-  ) => Promise<Result<QTreeNode | undefined, FxError>>;
-
-  /**
-   * get question model for plugin customized {@link Task}, Questions are organized as a tree. Please check {@link QTreeNode}.
-   */
-  getQuestionsForUserTask?: (
-    ctx: ResourceAllContext,
-    router: FunctionRouter,
-    inputs: Inputs
-  ) => Promise<Result<QTreeNode | undefined, FxError>>;
-
-  /**
-   * execute user customized task, for example `Add Resource`, `Add Capabilities`, etc
-   */
-  executeUserTask?: (
-    ctx: ResourceAllContext,
-    func: Func,
-    inputs: Inputs
-  ) => Promise<Result<unknown, FxError>>;
+  executeUserTask?: ( func: Func, inputs: Inputs,  ctx?: Context ) => Promise<Result<unknown, FxError>>;
 }

@@ -59,15 +59,16 @@ export class FxCore implements Core {
           default: { name: "default", local: false, sideloading: false },
         },
         currentEnv: "default",
-        solutionSetting: {
+        solution: {
           name: "fx-solution-default",
           version: "1.0.0",
-          resources: [],
-          resourceSettings: {},
         },
+        solutionSetting:{
+          resourcePlugins:[]
+        }
       },
       projectState: {
-        resourceStates: {},
+        solutionState: {},
       },
       globalSolutions: this.globalSolutions,
     };
@@ -82,8 +83,7 @@ export class FxCore implements Core {
         path.join(projectPath, `.${ConfigFolderName}`, "state.json")
       );
       const envName = projectSetting.currentEnv;
-      const resources = (projectSetting.solutionSetting as TeamsSolutionSetting)
-        .activeResourcePlugins;
+      const resources = projectSetting.solutionSetting.resourcePlugins;
       const privisionTemplates: Record<string, Json> = {};
       const deployTemplates: Record<string, Json> = {};
       if (resources) {

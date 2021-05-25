@@ -25,10 +25,10 @@ export const ConfigWriterMW: Middleware = async (
     if(ctx.arguments[0]){
       const coreCtx: CoreContext = ctx.arguments[0] as CoreContext;
 
-      if(coreCtx.solutionContext){
-        coreCtx.projectSetting.solutionSetting = coreCtx.solutionContext.solutionSetting;
-        coreCtx.projectSetting.solutionSetting = coreCtx.solutionContext.solutionSetting;
-      }
+      // if(coreCtx.solutionContext){
+      //   coreCtx.projectSetting.solutionSetting = coreCtx.solutionContext.solutionSetting;
+      //   coreCtx.projectSetting.solutionSetting = coreCtx.solutionContext.solutionSetting;
+      // }
      
       try { 
         const configFolder = path.join(coreCtx.projectPath,`.${ConfigFolderName}`);
@@ -36,7 +36,7 @@ export const ConfigWriterMW: Middleware = async (
         await fs.writeFile(path.join(configFolder,"state.json"), JSON.stringify(coreCtx.projectState, null, 4)  );
         const envName = coreCtx.projectSetting.currentEnv;
         // provision,deploy template
-        const resources = ((coreCtx.projectSetting.solutionSetting) as TeamsSolutionSetting).activeResourcePlugins;
+        const resources = coreCtx.projectSetting.solutionSetting.resourcePlugins;
         //only create project need to persist template files
         if(ctx.method === "createProject" && resources && resources.length > 0){
           for(const resource of resources){

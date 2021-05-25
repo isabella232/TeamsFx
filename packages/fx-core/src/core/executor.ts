@@ -19,7 +19,7 @@ import {
   EnvMeta,
   SolutionEnvContext,
   Task,
-  SolutionAllContext,
+  SolutionPublishContext,
   FunctionRouter,
   SolutionScaffoldResult,
   SolutionProvisionResult,
@@ -146,7 +146,7 @@ export class Executor {
 
   @hooks([projectTypeCheckerMW, ConfigWriterMW])
   static async publishApplication(ctx: CoreContext, inputs: Inputs): Promise<Result<Void, FxError>> {
-    const solutionContext:SolutionAllContext = this.createSolutionAllContext(ctx);
+    const solutionContext:SolutionPublishContext = this.createSolutionAllContext(ctx);
     ctx.solutionContext = solutionContext;
     const res = await ctx.solution!.publishApplication(solutionContext, inputs);
     if(res.isOk()){
@@ -394,12 +394,12 @@ export class Executor {
     return solutionContext;
   }
 
-  static createSolutionAllContext(ctx: CoreContext):SolutionAllContext{
+  static createSolutionAllContext(ctx: CoreContext):SolutionPublishContext{
     // build SolutionAllContext
     const provisionConfigs = this.getProvisionConfigs(ctx);
     const deployConfigs = this.getDeployConfigs(ctx);
     const envMeta = ctx.projectSetting.environments[ctx.projectSetting.currentEnv];
-    const solutionContext:SolutionAllContext = {
+    const solutionContext:SolutionPublishContext = {
       ...this.createSolutionContext(ctx),
       env: envMeta,
       tokenProvider: ctx.tokenProvider,

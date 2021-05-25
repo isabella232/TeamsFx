@@ -3,7 +3,7 @@
 "use strict";
 
 import { Result } from "neverthrow";  
-import { Context, EnvMeta, FunctionRouter, FxError, Inputs, QTreeNode, Task, TokenProvider, Func, Json } from "./index";
+import { Context, EnvMeta, FunctionRouter, FxError, Inputs, QTreeNode, Task, TokenProvider, Func, Json, Void } from "./index";
 
  
 export interface SolutionProvisionContext extends Context {
@@ -19,7 +19,7 @@ export interface SolutionScaffoldResult{
   deployTemplates: Record<string, Json>;
 }
  
-export interface SolutionAllContext extends Context {
+export interface SolutionPublishContext extends Context {
     env: EnvMeta;
     tokenProvider: TokenProvider;
     provisionConfigs?: Record<string, Json>;
@@ -30,7 +30,6 @@ export interface SolutionAllContext extends Context {
 export interface SolutionProvisionResult{
   resourceValues: Record<string, string>;
   stateValues: Record<string, string>;
-  solutionState: Json;
 }
  
 
@@ -42,25 +41,25 @@ export interface SolutionPlugin {
  
     scaffoldFiles: (ctx: Context, inputs: Inputs) => Promise<Result<SolutionScaffoldResult, FxError>>;
  
-    buildArtifacts: (ctx: Context, inputs: Inputs) => Promise<Result<undefined, FxError>>;
+    buildArtifacts: (ctx: Context, inputs: Inputs) => Promise<Result<Void, FxError>>;
  
     provisionResources: (ctx: SolutionProvisionContext, inputs: Inputs) => Promise<Result<SolutionProvisionResult, FxError>>;
  
-    deployArtifacts: (ctx: SolutionDeployContext, inputs: Inputs) => Promise<Result<SolutionProvisionResult, FxError>>;
+    deployArtifacts: (ctx: SolutionDeployContext, inputs: Inputs) => Promise<Result<Void, FxError>>;
   
-    publishApplication: (ctx: SolutionAllContext, inputs: Inputs) => Promise<Result<SolutionProvisionResult, FxError>>;
+    publishApplication: (ctx: SolutionPublishContext, inputs: Inputs) => Promise<Result<Void, FxError>>;
+    
     /**
      * get question model for lifecycle {@link Task} (create, provision, deploy, publish), Questions are organized as a tree. Please check {@link QTreeNode}.
      */
-    getQuestionsForLifecycleTask: (ctx: SolutionAllContext, task: Task, inputs: Inputs) => Promise<Result<QTreeNode|undefined, FxError>>;
+    getQuestionsForLifecycleTask: (task: Task, inputs: Inputs, ctx?: Context) => Promise<Result<QTreeNode|undefined, FxError>>;
 
     /**
      * get question model for plugin customized {@link Task}, Questions are organized as a tree. Please check {@link QTreeNode}.
      */
-    getQuestionsForUserTask?: (ctx: SolutionAllContext, router: FunctionRouter, inputs: Inputs) => Promise<Result<QTreeNode|undefined, FxError>>;
-
+    getQuestionsForUserTask?: (router: FunctionRouter, inputs: Inputs, ctx?: Context) => Promise<Result<QTreeNode|undefined, FxError>>;
     /**
      * execute user customized task, for example `Add Resource`, `Add Capabilities`, etc
      */
-    executeUserTask?: (ctx: SolutionAllContext, func:Func, inputs: Inputs) => Promise<Result<unknown, FxError>>;
+    executeUserTask?: (func:Func, inputs: Inputs, ctx?: Context) => Promise<Result<unknown, FxError>>;
 }
