@@ -5,8 +5,9 @@
 import { LogProvider } from "./log";
 import { TokenProvider } from "./login";
 import { TelemetryReporter } from "./telemetry";
-import { TreeProvider } from "../ui/tree";
+import { TreeProvider } from "./tree";
 import { UserInteraction } from "../ui";
+import { AccountManager } from "../account/account";
 
 export * from "./login";
 export * from "./log";
@@ -14,9 +15,9 @@ export * from "./telemetry";
 
 export interface Tools
 {
-    logProvider: LogProvider;
-    tokenProvider: TokenProvider;
+    logger: LogProvider;
+    accountManager: AccountManager;
     telemetryReporter: TelemetryReporter;
-    treeProvider: TreeProvider;
     userInteraction: UserInteraction;
+    treeProvider?: TreeProvider;
 }

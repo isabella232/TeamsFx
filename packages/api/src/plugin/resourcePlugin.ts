@@ -15,7 +15,7 @@ import {
   Func,
   Json,
   TimeConsumingTask,
-} from "./index";
+} from "../index";
 
 export interface ResourceScaffoldResult {
   provisionTemplate: Json;
@@ -33,13 +33,6 @@ export type ResourceDeployContext = ResourceProvisionContext;
  
 export interface ResourceConfigureContext extends ResourceProvisionContext {
   provisionConfigs: Record<string, Json>;
-}
-
-export interface ResourceAllContext extends Context {
-  envMeta: EnvMeta;
-  tokenProvider: TokenProvider;
-  provisionConfig?: Json;
-  deployConfig?: Json;
 }
 
 export interface ResourcePublishContext extends Context {

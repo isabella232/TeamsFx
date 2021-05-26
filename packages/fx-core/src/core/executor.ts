@@ -337,7 +337,7 @@ export class Executor {
  
 
   static getProvisionConfigs(ctx: CoreContext):Record<string,Json>{
-    const resources = ((ctx.projectSetting.solutionSetting)as TeamsSolutionSetting).activeResourcePlugins;
+    const resources = ctx.projectSetting.solutionSetting.resourcePlugins;
     const provisionConfigs: Record<string,Json> = {};
     if(resources){
       for(const resource of resources){
@@ -354,7 +354,7 @@ export class Executor {
   }
 
   static getDeployConfigs(ctx: CoreContext):Record<string,Json>{
-    const resources = ((ctx.projectSetting.solutionSetting)as TeamsSolutionSetting).activeResourcePlugins;
+    const resources = ctx.projectSetting.solutionSetting.resourcePlugins;
     const deployConfigs: Record<string,Json> = {};
     if(resources){
       for(const resource of resources){

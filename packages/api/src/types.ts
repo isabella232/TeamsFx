@@ -3,7 +3,7 @@
 "use strict";
 
 import { Platform, VsCodeEnv } from "./constants";
-import { UserInteraction } from "./qm/ui";
+import { UserInteraction } from "./ui";
 import { LogProvider, TelemetryReporter } from "./utils"; 
  
 // eslint-disable-next-line @typescript-eslint/ban-types

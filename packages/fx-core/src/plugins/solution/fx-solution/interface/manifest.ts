@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 "use strict";
 
-import { Json } from "../types";
+import { Json } from "fx-api/src/types";
 
  
 

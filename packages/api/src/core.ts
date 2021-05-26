@@ -16,12 +16,8 @@ import {
 
 export interface Core {
 
-  init: (tools:Tools) => Promise<Result<Void, FxError>>;
-
-  /**
-   * create a project, return the project path
-   * Core module will not open the created project after creation
-   */
+  init: (systemInputs: Inputs) => Promise<Result<Void, FxError>>;
+ 
   createProject: ( systemInputs: Inputs ) => Promise<Result<string, FxError>>;
 
   provisionResources: (systemInputs: Inputs) => Promise<Result<Void, FxError>>;
@@ -39,7 +35,7 @@ export interface Core {
   switchEnv: ( systemInputs: Inputs ) => Promise<Result<Void, FxError>>;
 
   executeUserTask: ( func: Func, inputs: Inputs ) => Promise<Result<unknown, FxError>>;
-  /**
+   /**
    * only for CLI
    */
   getQuestionsForLifecycleTask: ( task: Task, inputs: Inputs ) => Promise<Result<QTreeNode | undefined, FxError>>;

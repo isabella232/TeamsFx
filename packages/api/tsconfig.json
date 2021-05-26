@@ -16,6 +16,6 @@
         "moduleResolution": "node",
         "resolveJsonModule": true
     },
-    "include": ["src"],
+    "include": ["src", "../fx-core/src/plugins/solution/fx-solution/interface/manifest.ts"],
     "exclude": ["node_modules", "**/__tests__/*"]
 }
