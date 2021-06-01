@@ -543,7 +543,7 @@
     "@azure/identity": "^1.2.1",
     "@azure/ms-rest-nodeauth": "^3.0.7",
     "@azure/msal-node": "^1.0.0-beta.5",
-    "@microsoft/teamsfx-api": "0.1.0-rc.4.rf.3",
+    "@microsoft/teamsfx-api": "0.1.0-rc.4.rf.4",
     "@microsoft/teamsfx-core": "0.1.0-rc.4.rf.6",
     "async-mutex": "^0.3.1",
     "dotenv": "^8.2.0",
