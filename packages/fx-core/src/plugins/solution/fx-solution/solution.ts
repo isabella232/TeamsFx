@@ -1158,7 +1158,7 @@ export class TeamsAppSolution implements Solution {
     const pluginsToDeploy: LoadedPlugin[] = [];
     for (const optionId of optionsToDeploy) {
       const filtered = this.pluginMap.get(optionId);
-      if (filtered) {
+      if (filtered && res.value.find(p => p.name === filtered.name)) {
         pluginsToDeploy.push(filtered);
       }
     }
@@ -2242,9 +2242,13 @@ export class TeamsAppSolution implements Solution {
     const alreadyHaveSql = selectedPlugins?.includes(this.sqlPlugin.name);
     const alreadyHaveApim = selectedPlugins?.includes(this.apimPlugin.name);
 
-    const addResourcesAnswer = ctx.answers[
-      AzureSolutionQuestionNames.AddResources
-     ] as string[];
+    const addResourcesAnswer = ctx.answers[AzureSolutionQuestionNames.AddResources] as string[];
+
+    if(!addResourcesAnswer){
+      return err(
+        returnUserError(new Error(`answer of ${AzureSolutionQuestionNames.AddResources} is empty!`), "Solution", SolutionError.InvalidInput)
+        );
+    }
 
     const addSQL = addResourcesAnswer.includes(AzureResourceSQL.id);
     const addFunc = addResourcesAnswer.includes(AzureResourceFunction.id);
@@ -2252,11 +2256,7 @@ export class TeamsAppSolution implements Solution {
 
     if ((alreadyHaveSql && addSQL) || (alreadyHaveApim && addApim)) {
       return err(
-        returnUserError(
-          new Error("SQL/APIM is already added."),
-          "Solution",
-          SolutionError.AddResourceNotSupport
-        )
+        returnUserError(new Error(`SQL or APIM is already enabled!`), "Solution", SolutionError.InternelError)
       );
     }
 
