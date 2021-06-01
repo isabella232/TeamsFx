@@ -9,6 +9,7 @@
 // and run the scripts (tools/depsChecker/copyfiles.sh or tools/depsChecker/copyfiles.ps1 according to your OS)
 // to copy you changes to function plugin.
 
+import * as fs from "fs-extra";
 import * as os from "os";
 
 export function isWindows(): boolean {
@@ -21,6 +22,22 @@ export function isMacOS(): boolean {
 
 export function isLinux(): boolean {
   return os.type() === "Linux";
+}
+
+// A stable method to detect WSL from an official source:
+// https://github.com/microsoft/WSL/issues/423#issuecomment-221627364
+const wslIdentifier = "WSL";
+const osreleaseFilePath = "/proc/sys/kernel/osrelease";
+export function isWSL(): boolean {
+  if (!isLinux()) {
+    return false;
+  }
+  try {
+    const versionString = fs.readFileSync(osreleaseFilePath);
+    return versionString.includes(wslIdentifier);
+  } catch (e) {
+    return false;
+  }
 }
 
 // help links

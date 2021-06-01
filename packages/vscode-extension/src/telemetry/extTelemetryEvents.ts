@@ -77,6 +77,8 @@ export enum TelemetryProperty {
   DebugAppId = "debug-appid",
   Internal = "internal",
   InternalAlias = "internal-alias",
+  OSArch = "os-arch",
+  OSIsWSL = "os-is-wsl",
 }
 
 export enum TelemetrySuccess {

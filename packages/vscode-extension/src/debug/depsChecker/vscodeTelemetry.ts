@@ -1,11 +1,12 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import * as os from "os";
 import { performance } from "perf_hooks";
 import { SystemError, UserError } from "@microsoft/teamsfx-api";
 import { TelemetryProperty } from "../../telemetry/extTelemetryEvents";
 import { ExtTelemetry } from "../../telemetry/extTelemetry";
-import { DepsCheckerEvent, TelemetryMessurement } from "./common";
+import { isWSL, DepsCheckerEvent, TelemetryMessurement } from "./common";
 import { IDepsTelemetry } from "./checker";
 
 export class VSCodeTelemetry implements IDepsTelemetry {
@@ -14,6 +15,8 @@ export class VSCodeTelemetry implements IDepsTelemetry {
   public sendEvent(eventName: DepsCheckerEvent, timecost?: number): void {
     const properties: { [p: string]: string } = {
       [TelemetryProperty.Component]: this._telemetryComponentType,
+      [TelemetryProperty.OSArch]: os.arch(),
+      [TelemetryProperty.OSIsWSL]: isWSL().toString(),
     };
 
     const measurements: { [p: string]: number } = {};
@@ -55,6 +58,8 @@ export class VSCodeTelemetry implements IDepsTelemetry {
     );
     ExtTelemetry.sendTelemetryErrorEvent(eventName, error, {
       [TelemetryProperty.Component]: this._telemetryComponentType,
+      [TelemetryProperty.OSArch]: os.arch(),
+      [TelemetryProperty.OSIsWSL]: isWSL().toString(),
     });
   }
 }
