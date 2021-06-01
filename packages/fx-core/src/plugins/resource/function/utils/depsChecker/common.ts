@@ -9,6 +9,7 @@
 // and run the scripts (tools/depsChecker/copyfiles.sh or tools/depsChecker/copyfiles.ps1 according to your OS)
 // to copy you changes to function plugin.
 
+import * as fs from "fs-extra";
 import * as os from "os";
 
 export function isWindows(): boolean {
@@ -21,6 +22,22 @@ export function isMacOS(): boolean {
 
 export function isLinux(): boolean {
   return os.type() === "Linux";
+}
+
+// A stable method to detect WSL from an official source:
+// https://github.com/microsoft/WSL/issues/423#issuecomment-221627364
+const wslIdentifier = "WSL";
+const osreleaseFilePath = "/proc/sys/kernel/osrelease";
+export function isWSL(): boolean {
+  if (!isLinux()) {
+    return false;
+  }
+  try {
+    const versionString = fs.readFileSync(osreleaseFilePath);
+    return versionString.includes(wslIdentifier);
+  } catch (e) {
+    return false;
+  }
 }
 
 // help links
@@ -61,11 +78,15 @@ export const Messages = {
 
 Teams Toolkit requires Node.js; the recommended version is v14.
 
-Click "Learn more" to learn how to install the Node.js.`,
+Click "Learn more" to learn how to install the Node.js.
+
+(If you just installed Node.js, restart Visual Studio Code for the change to take effect.)`,
   NodeNotSupported: `Node.js (@CurrentVersion) is not in the supported version list (@SupportedVersions).
 
 Click "Learn more" to learn more about the supported Node.js versions.
-Click "Continue anyway" to continue local debugging.`,
+Click "Continue anyway" to continue local debugging.
+
+(If you just installed Node.js (@SupportedVersions), restart Visual Studio Code for the change to take effect.)`,
 
   dotnetNotFound: `Cannot find @NameVersion. For the details why .NET SDK is needed, refer to ${dotnetExplanationHelpLink}`,
   depsNotFound: `Cannot find @SupportedPackages.
@@ -76,9 +97,11 @@ Click "Install" to install @InstallPackages.`,
 
   linuxDepsNotFound: `Cannot find @SupportedPackages.
 
-Teams Toolkit requires these dependencies.
+Teams Toolkit requires these dependencies. 
 
-Click "Continue anyway" to continue.`,
+Click "Continue anyway" to continue.
+
+(If you just installed @SupportedPackages, restart Visual Studio Code for the change to take effect.)`,
 
   linuxDepsNotFoundHelpLinkMessage: `Cannot find @SupportedPackages.
 
