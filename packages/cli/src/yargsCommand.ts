@@ -43,7 +43,7 @@ export abstract class YargsCommand {
    * @returns void or number. Where number is retured this causes yargs to terminate and becomes the yargs exit code.
    */
   abstract runCommand(args: {
-    [argName: string]: string | string[];
+    [argName: string]: string | string[] | undefined;
   }): Promise<Result<any, FxError>>;
 
   /**
@@ -89,10 +89,10 @@ export abstract class YargsCommand {
         CLILogProvider.necessaryLog(LogLevel.Error, FxError.stack || "undefined");
       }
 
-      CliTelemetryInstance.flush();
+      await CliTelemetryInstance.flush();
       exit(-1, FxError);
     }
 
-    CliTelemetryInstance.flush();
+    await CliTelemetryInstance.flush();
   }
 }
