@@ -29,6 +29,7 @@ import {
 import * as path from "path";
 import {
   fetchCodeZip,
+  isValidProject,
   saveFilesRecursively,
 } from "../common/tools";
 import {
@@ -130,14 +131,18 @@ export class FxCore implements Core {
    
   @hooks([ErrorHandlerMW])
   async getProjectConfig(inputs: Inputs): Promise<Result<ProjectConfig|undefined, FxError>>{
-    if(inputs.projectPath){
-      const ctx = await loadSolutionContext(this.tools, inputs);
-      return ok({
-        settings: ctx.projectSettings,
-        config: ctx.config
-      });
+    const projectPath = inputs.projectPath;
+    if(!projectPath) {
+      return ok(undefined);
     }
-    else return ok(undefined);
+    if(!isValidProject(projectPath)){
+      return ok(undefined);
+    }
+    const ctx = await loadSolutionContext(this.tools, inputs);
+    return ok({
+      settings: ctx.projectSettings,
+      config: ctx.config
+    });
   }
 
   @hooks([ErrorHandlerMW, ProjectCheckerMW])
@@ -180,7 +185,7 @@ export class FxCore implements Core {
             }
             return ok(path.join(folder, sampleId));
           } else { 
-            return err(FetchSampleError);
+            return err(FetchSampleError());
           }
         } finally {
           progress.end();
@@ -295,7 +300,7 @@ export class FxCore implements Core {
         return ok(Void);
       }
     }
-    return err(InvalidProjectError);
+    return err(InvalidProjectError());
   }
  
   @hooks([ErrorHandlerMW])
