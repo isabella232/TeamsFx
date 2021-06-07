@@ -15,10 +15,8 @@ import {
 } from "@microsoft/teamsfx-api";
 import sinon from "sinon";
 import {
-  ConfigKeys,
-  ConfigKeysOfOtherPlugin,
   Plugins,
-} from "../../../../src/plugins/resource/aad/constants";
+} from "../../../../src/plugins/resource/aad/constants/constants";
 import jwt_decode from "jwt-decode";
 import { Utils } from "../../../../src/plugins/resource/aad/utils/common";
 
@@ -175,26 +173,26 @@ function mockConfigOfOtherPluginsProvision(
 ) {
   return new Map([
     [
-      Plugins.solution,
+      Plugins.SolutionPlugin.id,
       new Map([
         [
-          ConfigKeysOfOtherPlugin.solutionPermissionRequest,
+          Plugins.SolutionPlugin.configKeys.permissionRequest,
           wrongPermission ? permissionsWrong : permissions,
         ],
       ]),
     ],
     [
-      Plugins.frontendHosting,
+      Plugins.FrontendPlugin.id,
       new Map([
-        [ConfigKeysOfOtherPlugin.frontendHostingDomain, domain],
-        [ConfigKeysOfOtherPlugin.frontendHostingEndpoint, endpoint],
+        [Plugins.FrontendPlugin.configKeys.domain, domain],
+        [Plugins.FrontendPlugin.configKeys.endpoint, endpoint],
       ]),
     ],
     [
-      Plugins.teamsBot,
+      Plugins.BotPlugin.id,
       new Map([
-        [ConfigKeysOfOtherPlugin.teamsBotEndpoint, botEndpoint],
-        [ConfigKeysOfOtherPlugin.teamsBotId, botId],
+        [Plugins.BotPlugin.configKeys.endpoint, botEndpoint],
+        [Plugins.BotPlugin.configKeys.id, botId],
       ]),
     ],
   ]);
@@ -209,40 +207,40 @@ function mockConfigOfOtherPluginsLocalDebug(
 ) {
   return new Map([
     [
-      Plugins.solution,
+      Plugins.SolutionPlugin.id,
       new Map([
         [
-          ConfigKeysOfOtherPlugin.solutionPermissionRequest,
+          Plugins.SolutionPlugin.configKeys.permissionRequest,
           wrongPermission ? permissionsWrong : permissions,
         ],
       ]),
     ],
     [
-      Plugins.localDebug,
+      Plugins.LocalDebugPlugin.id,
       new Map([
-        [ConfigKeysOfOtherPlugin.localDebugTabDomain, domain],
-        [ConfigKeysOfOtherPlugin.localDebugTabEndpoint, endpoint],
-        [ConfigKeysOfOtherPlugin.localDebugBotEndpoint, botEndpoint],
+        [Plugins.LocalDebugPlugin.configKeys.tabDomain, domain],
+        [Plugins.LocalDebugPlugin.configKeys.tabEndpoint, endpoint],
+        [Plugins.LocalDebugPlugin.configKeys.botEndpoint, botEndpoint],
       ]),
     ],
-    [Plugins.teamsBot, new Map([[ConfigKeysOfOtherPlugin.teamsBotIdLocal, botId]])],
+    [Plugins.BotPlugin.id, new Map([[Plugins.BotPlugin.configKeys.idLocal, botId]])],
   ]);
 }
 
-export function mockProvisionResult(context: PluginContext, isLocalDebug = false) {
-  context.config.set(
-    Utils.addLocalDebugPrefix(isLocalDebug, ConfigKeys.clientId),
-    faker.random.uuid()
-  );
-  context.config.set(
-    Utils.addLocalDebugPrefix(isLocalDebug, ConfigKeys.objectId),
-    faker.random.uuid()
-  );
-  context.config.set(
-    Utils.addLocalDebugPrefix(isLocalDebug, ConfigKeys.clientSecret),
-    faker.random.uuid()
-  );
-}
+// export function mockProvisionResult(context: PluginContext, isLocalDebug = false) {
+//   context.config.set(
+//     Utils.addLocalDebugPrefix(isLocalDebug, Plugins.AADPlugin.configKeys.clientId),
+//     faker.random.uuid()
+//   );
+//   context.config.set(
+//     Utils.addLocalDebugPrefix(isLocalDebug, ConfigKeys.objectId),
+//     faker.random.uuid()
+//   );
+//   context.config.set(
+//     Utils.addLocalDebugPrefix(isLocalDebug, ConfigKeys.clientSecret),
+//     faker.random.uuid()
+//   );
+// }
 
 export function mockTokenProvider(): AppStudioTokenProvider {
   const provider = <AppStudioTokenProvider>{};

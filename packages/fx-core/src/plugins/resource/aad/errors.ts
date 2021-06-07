@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { ConfigKeys, Plugins } from "./constants";
+import { Plugins } from "./constants/constants";
 
 const referLogMessage = "Please refer to the log for detailed information.";
 const referHelpLink = "Please refer to the help link for further steps.";
@@ -18,7 +18,7 @@ export const GetAppError: AadError = {
   message: (objectId: string) =>
     `Failed to get app info with Object ID: ${objectId}. ` +
     "Please make sure object id is valid, " +
-    `or delete 'objectId' under ${Plugins.pluginNameComplex} in env.default.json and try again.`,
+    `or delete 'objectId' under ${Plugins.AADPlugin.id} in env.default.json and try again.`,
 };
 
 export const GetAppConfigError: AadError = {
@@ -26,14 +26,14 @@ export const GetAppConfigError: AadError = {
   message: (config: string) =>
     `Failed to get ${config} from Azure AD app settings.` +
     "Please make sure Azure AD app is correctly configured, " +
-    `or delete 'objectId' under ${Plugins.pluginNameComplex} in env.default.json and try again.`,
+    `or delete 'objectId' under ${Plugins.AADPlugin.id} in env.default.json and try again.`,
 };
 
 export const GetSkipAppConfigError: AadError = {
   name: "AadGetSkipAppConfigError",
   message: () =>
-    `Failed to get all necessary info. You need to set ${ConfigKeys.objectId}, ${ConfigKeys.clientId}, ${ConfigKeys.clientSecret}, ` +
-    `${ConfigKeys.oauth2PermissionScopeId} under ${Plugins.pluginNameComplex} in env.default.json.`,
+    `Failed to get all necessary info. You need to set ${Plugins.AADPlugin.configKeys.objectId}, ${Plugins.AADPlugin.configKeys.clientId}, ${Plugins.AADPlugin.configKeys.clientSecret}, ` +
+    `${Plugins.AADPlugin.configKeys.oauth2PermissionScopeId} under ${Plugins.AADPlugin.id} in env.default.json.`,
   helpLink: aadHelpLink,
 };
 

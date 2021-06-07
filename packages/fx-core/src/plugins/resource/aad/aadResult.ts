@@ -2,12 +2,12 @@
 // Licensed under the MIT license.
 
 import { FxError, SystemError, UserError, Result, ok } from "@microsoft/teamsfx-api";
-import { Plugins } from "./constants";
+import { Plugins } from "./constants/constants";
 
 export type AadResult = Result<any, FxError>;
 
 export class ResultFactory {
-  static readonly source: string = Plugins.pluginNameShort;
+  static readonly source: string = Plugins.AADPlugin.shortName;
 
   public static UserError(
     name: string,
