@@ -40,6 +40,26 @@ export abstract class Stage {
 
 	public abstract run(): Promise<Result<any, FxError>>;
 
+	public getConfig(key: string): ConfigValue {
+		if (!this.inputConfig || !this.inputConfig.has(key)) {
+			return undefined;
+		}
+
+		const value = this.inputConfig.get(key);
+		return value?.value;
+	}
+
+	public setConfig(key: string, value: ConfigValue): void {
+		if (!this.outputConfig || !this.outputConfig.has(key)) {
+			return;
+		}
+
+		const configValue = this.outputConfig.get(key) as IConfigValue;
+		configValue.value = value;
+		this.outputConfig.set(key, configValue);
+		console.log(`${key}::${value}`);
+	}
+
 	protected sendStartTelemetryEvent(): void {
 		const properties: { [key: string]: string } = {};
 		properties[Telemetry.component] = this.plugin.id;
@@ -75,21 +95,10 @@ export abstract class Stage {
 		});
 	}
 
-  protected setConfig(key: string, value: ConfigValue): void {
-    if (!this.outputConfig || !this.outputConfig.has(key)) {
-      return;
-    }
-
-    const configValue = this.outputConfig.get(key) as IConfigValue;
-    configValue.value = value;
-    this.outputConfig.set(key, configValue);
-    console.log(`${key}::${value}`);
-  }
-
 	protected saveConfig(islocalDebug = false): void {
-    if (!this.outputConfig) {
-      return;
-    }
+		if (!this.outputConfig) {
+			return;
+		}
 
 		this.outputConfig.forEach((configValue, key) => {
 			if (islocalDebug && configValue.localKey) {
@@ -97,18 +106,18 @@ export abstract class Stage {
 			} else {
 				this.saveConfigToContext(configValue.remoteKey, configValue.value);
 			}
-      this.ctx.logProvider?.info(`${key}: ${configValue.value}`);
+			this.ctx.logProvider?.info(`${key}: ${configValue.value}`);
 		});
 	}
 
-  protected getLogMessage(message: string): string {
-    return `[${this.plugin.name}] ${message}`;
-  }
+	protected getLogMessage(message: string): string {
+		return `[${this.plugin.name}] ${message}`;
+	}
 
 	private readConfigFromContext(pluginId: string, key: string, required = true): ConfigValue {
 		const configValue: ConfigValue = this.ctx.configOfOtherPlugins.get(pluginId)?.get(key);
 		if (!configValue && required) {
-      throw new Error(`Failed to get key "${key}" from plugin "${pluginId}"`);
+			throw new Error(`Failed to get key "${key}" from plugin "${pluginId}"`);
 		}
 		return configValue;
 	}

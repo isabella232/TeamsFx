@@ -10,20 +10,20 @@ import { provisionInputConfig, provisionOutputConfig } from "../constants/config
 import { Plugins } from "../constants/constants";
 
 export class Provision extends Stage {
-    event = this.isLocalDebug ? Events.LocalDebug : Events.Provision;
-    inputConfig = provisionInputConfig;
-    outputConfig = provisionOutputConfig;
+	event = this.isLocalDebug ? Events.LocalDebug : Events.Provision;
+	inputConfig = provisionInputConfig;
+	outputConfig = provisionOutputConfig;
 
-    constructor(ctx: PluginContext, isLocalDebug = false, plugin: IPlugin) {
-        super(ctx, isLocalDebug, plugin);
-    }
+	constructor(ctx: PluginContext, isLocalDebug = false, plugin: IPlugin) {
+		super(ctx, isLocalDebug, plugin);
+	}
 
-    public async run(): Promise<AadResult> {
-        this.sendStartTelemetryEvent();
-        this.readConfig();
-        this.setConfig(Plugins.AADPlugin.configKeys.clientId, "abc");
-        this.saveConfig();
-        this.sendTelemetryEvent();
-        return ResultFactory.Success();
-    }
+	public async run(): Promise<AadResult> {
+		this.sendStartTelemetryEvent();
+		this.readConfig();
+		this.setConfig(Plugins.AADPlugin.configKeys.clientId, this.getConfig(Plugins.AADPlugin.configKeys.permissionRequest));
+		this.saveConfig();
+		this.sendTelemetryEvent();
+		return ResultFactory.Success();
+	}
 }
