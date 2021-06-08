@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { IConfig } from "../interfaces/IConfig";
+import { IConfig } from "../../commonUtils/interfaces/IConfig";
 import { Utils } from "../utils/common";
 import { Constants, Plugins } from "./constants";
 
-export let provisionInputConfig: IConfig = new Map([
+export const provisionInputConfig: IConfig = new Map([
   [
     Plugins.AADPlugin.configKeys.permissionRequest,
     {
@@ -31,7 +31,7 @@ export let provisionInputConfig: IConfig = new Map([
   ],
 ]);
 
-export let provisionOutputConfig: IConfig = new Map([
+export const provisionOutputConfig: IConfig = new Map([
   [
     Plugins.AADPlugin.configKeys.clientId,
     {
@@ -54,7 +54,7 @@ export let provisionOutputConfig: IConfig = new Map([
     }
   ],
   [
-    Plugins.AADPlugin.configKeys.clientId,
+    Plugins.AADPlugin.configKeys.oauth2PermissionScopeId,
     {
       remoteKey: Plugins.AADPlugin.configKeys.oauth2PermissionScopeId,
       localKey: Utils.addLocalDebugPrefix(Plugins.AADPlugin.configKeys.oauth2PermissionScopeId),
@@ -94,4 +94,4 @@ export let provisionOutputConfig: IConfig = new Map([
       remoteKey: Plugins.AADPlugin.configKeys.oauthAuthority,
     }
   ],
-])
+]);

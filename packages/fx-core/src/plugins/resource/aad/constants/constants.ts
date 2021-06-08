@@ -1,8 +1,10 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
+import { IPlugin } from "../../commonUtils/interfaces/IPlugin";
+
 export class Plugins {
-  static readonly AADPlugin = {
+  static readonly AADPlugin: IPlugin = {
     id: "fx-resource-aad-app-for-teams",
     name: "AAD App Registration",
     shortName: "aad",
@@ -24,14 +26,14 @@ export class Plugins {
     }
   };
 
-  static readonly SolutionPlugin = {
+  static readonly SolutionPlugin: IPlugin = {
     id: "solution",
     configKeys: {
       permissionRequest: "permissionRequest",
     }
   };
 
-  static readonly FrontendPlugin = {
+  static readonly FrontendPlugin: IPlugin = {
     id: "fx-resource-frontend-hosting",
     configKeys: {
       domain: "domain",
@@ -39,7 +41,7 @@ export class Plugins {
     }
   }
 
-  static readonly BotPlugin = {
+  static readonly BotPlugin: IPlugin = {
     id: "fx-resource-bot",
     configKeys: {
       id: "botId",
@@ -48,7 +50,7 @@ export class Plugins {
     }
   };
 
-  static readonly LocalDebugPlugin = {
+  static readonly LocalDebugPlugin: IPlugin = {
     id: "fx-resource-local-debug",
     configKeys: {
       tabDomain: "localTabDomain",
@@ -65,81 +67,4 @@ export class Constants {
   static aadAppMaxLength = 120;
   static aadAppPasswordDisplayName = "default";
   static localDebugPrefix = "local_";
-}
-
-export interface IMessages {
-  log: string;
-  telemetry: string;
-}
-
-export class Messages {
-  public static readonly getLog = (log: string) => `[${Plugins.AADPlugin.name}] ${log}`;
-  private static readonly getEventName = (eventName: string) => `${eventName}`;
-
-  static readonly StartProvision: IMessages = {
-    log: Messages.getLog("Start to provision"),
-    telemetry: Messages.getEventName("provision-start"),
-  };
-
-  static readonly EndProvision: IMessages = {
-    log: Messages.getLog("Successfully provision"),
-    telemetry: Messages.getEventName("provision"),
-  };
-
-  static readonly StartLocalDebug: IMessages = {
-    log: Messages.getLog("Start to local debug"),
-    telemetry: Messages.getEventName("local-debug-start"),
-  };
-
-  static readonly EndLocalDebug: IMessages = {
-    log: Messages.getLog("Successfully local debug"),
-    telemetry: Messages.getEventName("local-debug"),
-  };
-
-  static readonly StartPostProvision: IMessages = {
-    log: Messages.getLog("Start to post-provision"),
-    telemetry: Messages.getEventName("post-provision-start"),
-  };
-
-  static readonly EndPostProvision: IMessages = {
-    log: Messages.getLog("Successfully post-provision"),
-    telemetry: Messages.getEventName("post-provision"),
-  };
-
-  static readonly StartPostLocalDebug: IMessages = {
-    log: Messages.getLog("Start to post local debug"),
-    telemetry: Messages.getEventName("post-local-debug-start"),
-  };
-
-  static readonly EndPostLocalDebug: IMessages = {
-    log: Messages.getLog("Successfully post local debug"),
-    telemetry: Messages.getEventName("post-local-debug"),
-  };
-
-  static readonly StartUpdatePermission: IMessages = {
-    log: Messages.getLog("Start to update permission"),
-    telemetry: Messages.getEventName("update-permission-start"),
-  };
-
-  static readonly EndUpdatePermission: IMessages = {
-    log: Messages.getLog("Successfully update permission"),
-    telemetry: Messages.getEventName("update-permission"),
-  };
-
-  static readonly GetAadAppSuccess = "Successfully get Azure AD app.";
-  static readonly CreateAadAppSuccess = "Successfully created Azure AD app.";
-  static readonly CreateAadAppPasswordSuccess = "Successfully created password for Azure AD app.";
-  static readonly UpdatePermissionSuccess = "Successfully updated permission for Azure AD app.";
-  static readonly SetAppIdUriSuccess = "Successfully created application id uri for Azure AD app.";
-  static readonly UpdateRedirectUriSuccess = "Successfully updated redirect uri for Azure AD app.";
-  static readonly UpdateAppIdUriSuccess =
-    "Successfully updated application id uri for Azure AD app.";
-  static readonly ParsePermissionSuccess = "Successfully parsed permissions.";
-  static readonly NoSelection =
-    "No Azure AD app found. Will not update permissions. You need to run provision or local debug first.";
-  static readonly UserCancelled = "Selection is cancelled by user.";
-  static readonly UpdatePermissionSuccessMessage =
-    "Successfully updated permission for Azure AD app. You can go to Azure Portal to check the permission or grant admin consent.";
-  static readonly SkipProvision =
-    "Azure AD app provision skipped. You need to mannual provision and config Azure AD app.";
 }

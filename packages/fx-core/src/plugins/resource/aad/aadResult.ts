@@ -7,7 +7,7 @@ import { Plugins } from "./constants/constants";
 export type AadResult = Result<any, FxError>;
 
 export class ResultFactory {
-  static readonly source: string = Plugins.AADPlugin.shortName;
+  static readonly source: string = Plugins.AADPlugin.shortName as string;
 
   public static UserError(
     name: string,

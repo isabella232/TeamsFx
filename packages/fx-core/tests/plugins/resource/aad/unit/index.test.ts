@@ -37,5 +37,6 @@ describe("AadAppForTeamsPlugin: CI", () => {
 
     const provision = await plugin.provision(context);
     chai.assert.isTrue(provision.isOk());
+    console.log(context.config);
   });
 });
