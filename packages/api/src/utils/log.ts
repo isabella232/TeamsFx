@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 "use strict";
+import colors from "colors";
 
 export enum LogLevel {
     /**
@@ -73,3 +74,37 @@ export interface LogProvider {
      */
     fatal(message: string): Promise<boolean>;
 }
+
+export enum Colors {
+    BRIGHT_WHITE = 0,
+    WHITE = 1,
+    BRIGHT_MAGENTA = 2,
+    BRIGHT_GREEN = 3
+  }
+  
+  export function getColorizedString(message: Array<{content: string, color: Colors}>): string {
+    if (process.stdout.isTTY) {
+      let colorizedMessage = "";
+      message.map(function(item) {
+        switch(item.color) {
+          case Colors.BRIGHT_WHITE:
+            colorizedMessage = colorizedMessage + item.content.white;
+            break;
+          case Colors.WHITE:
+            colorizedMessage = colorizedMessage + item.content.grey;
+            break;
+          case Colors.BRIGHT_MAGENTA:
+            colorizedMessage = colorizedMessage + item.content.magenta;
+            break;
+          case Colors.BRIGHT_GREEN:
+            colorizedMessage = colorizedMessage + item.content.green;
+            break;
+          default:
+            break;
+        }
+      });
+      return colorizedMessage;
+    } else {
+      return message.map(x => x.content).join("");
+    }
+  }

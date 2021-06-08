@@ -19,6 +19,8 @@ import {
   QuestionType,
   SystemError,
   UserError,
+  Colors,
+  getColorizedString
 } from "@microsoft/teamsfx-api";
 import { AppStudioPluginImpl } from "./plugin";
 import { Constants } from "./constants";
@@ -128,13 +130,20 @@ export class AppStudioPlugin implements Plugin {
         appDirectory,
         manifestString
       );
+
+      const message = getColorizedString([{ content: "(√)Done: ", color: Colors.BRIGHT_GREEN },
+      { content: "Teams Package ", color: Colors.BRIGHT_WHITE },
+      { content: appPackagePath, color: Colors.BRIGHT_MAGENTA },
+      { content: " built successfully!", color: Colors.BRIGHT_WHITE }]);
+
       const builtSuccess = `Teams Package ${appPackagePath} built successfully!`;
       await ctx.dialog?.communicate(
         new DialogMsg(DialogType.Show, {
-          description: builtSuccess,
+          description: message,
           level: MsgLevel.Info,
         })
       );
+      ctx.logProvider?.info(message);
       const properties: { [key: string]: string } = {};
       properties[TelemetryPropertyKey.buildOnly] = "true";
       TelemetryUtils.sendSuccessEvent(TelemetryEventName.buildTeamsPackage, properties);
