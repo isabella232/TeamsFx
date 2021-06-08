@@ -32,11 +32,12 @@ import {
   OptionItem,
   LogLevel,
   UserCancelError,
+  Colors
 } from "@microsoft/teamsfx-api";
 
 import CLILogProvider from "./commonlib/log";
 import { UnknownError } from "./error";
-import { sleep } from "./utils";
+import { getColorizedString, sleep } from "./utils";
 
 /// TODO: input can be undefined
 type ValidationType<T> = (input: T) => string | boolean | Promise<string | boolean>;
@@ -359,7 +360,7 @@ export class CLIUserInteraction implements UserInteraction {
 
   public async showMessage(
     level: "info" | "warn" | "error",
-    message: string,
+    message: string | Array<{content: string, color: Colors}>,
     modal: boolean,
     ...items: string[]
   ): Promise<ShowMessageResult> {
@@ -380,6 +381,9 @@ export class CLIUserInteraction implements UserInteraction {
           resolve({ type: "success" });
           break;
         case 1: {
+          if (typeof message !=="string") {
+            message = getColorizedString(message);
+          }
           const result = await this.confirm("MyConfirmQuestion", message);
           if (result.isOk()) {
             if (result.value) {
@@ -393,6 +397,9 @@ export class CLIUserInteraction implements UserInteraction {
           break;
         }
         default: {
+          if (typeof message !=="string") {
+            message = getColorizedString(message);
+          }
           const result = await this.singleSelect(
             "MySingleSelectQuestion",
             message,

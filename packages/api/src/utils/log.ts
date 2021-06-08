@@ -35,7 +35,7 @@ export interface LogProvider {
      * @param logLevel Defines logging severity levels.
      * @param message Information of log event
      */
-    log(logLevel: LogLevel, message: string): Promise<boolean>;
+    log(logLevel: LogLevel, message: string | Array<{content: string, color: Colors}>): Promise<boolean>;
 
     /**
      * Use to record trace information
@@ -53,7 +53,7 @@ export interface LogProvider {
      * Use to record info information
      * @param message Information of log event
      */
-    info(message: string): Promise<boolean>;
+    info(message: string | Array<{content: string, color: Colors}>): Promise<boolean>;
 
     /**
      * Use to record warning information
@@ -72,4 +72,11 @@ export interface LogProvider {
      * @param message Information of log event
      */
     fatal(message: string): Promise<boolean>;
+}
+
+export enum Colors {
+    BRIGHT_WHITE = 0,
+    WHITE = 1,
+    BRIGHT_MAGENTA = 2,
+    BRIGHT_GREEN = 3
 }

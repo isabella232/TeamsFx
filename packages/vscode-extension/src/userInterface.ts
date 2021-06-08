@@ -65,15 +65,22 @@ export class DialogManager implements Dialog {
       }
       case DialogType.Output: {
         let result: boolean;
+        let description;
+        const content = (msg.content as IMessage).description;
+        if (typeof content === "string") {
+          description = content;
+        } else {
+          description = (content as Array<{content: string}>).map(x => x.content).join("");
+        }
         switch ((msg.content as IMessage).level) {
           case MsgLevel.Info:
-            result = await VsCodeLogInstance.info((msg.content as IMessage).description);
+            result = await VsCodeLogInstance.info(description);
             break;
           case MsgLevel.Warning:
-            result = await VsCodeLogInstance.warning((msg.content as IMessage).description);
+            result = await VsCodeLogInstance.warning(description);
             break;
           case MsgLevel.Error:
-            result = await VsCodeLogInstance.error((msg.content as IMessage).description);
+            result = await VsCodeLogInstance.error(description);
             break;
         }
         return new DialogMsg(DialogType.Show, {
@@ -122,24 +129,32 @@ export class DialogManager implements Dialog {
    */
   private async showMessage(msg: IMessage): Promise<string | undefined> {
     let result = undefined;
+
+    let description;
+    if (typeof msg.description === "string") {
+      description = msg.description;
+    } else {
+      description = (msg.description as Array<{content: string}>).map(x => x.content).join("");
+    }
+
     switch (msg.level) {
       case MsgLevel.Info:
         result = ext.ui.showInformationMessage(
-          msg.description,
+          description,
           msg.modal,
           ...(msg.items ? msg.items : [])
         );
         break;
       case MsgLevel.Warning:
         result = ext.ui.showWarningMessage(
-          msg.description,
+          description,
           msg.modal,
           ...(msg.items ? msg.items : [])
         );
         break;
       case MsgLevel.Error:
         result = ext.ui.showErrorMessage(
-          msg.description,
+          description,
           msg.modal,
           ...(msg.items ? msg.items : [])
         );

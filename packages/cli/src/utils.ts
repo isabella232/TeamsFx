@@ -22,6 +22,7 @@ import {
   getSingleOption,
   SingleSelectQuestion,
   MultiSelectQuestion,
+  Colors
 } from "@microsoft/teamsfx-api";
 
 import { ConfigNotFoundError, ReadFileError } from "./error";
@@ -224,4 +225,27 @@ export function getTeamsAppId(rootfolder: string | undefined): any {
   }
 
   return undefined;
+}
+
+export function getColorizedString(message: Array<{content: string, color: Colors}>): string {
+  let colorizedMessage = "";
+  (message as Array<{content: string, color: Colors}>).map(function(item) {
+    switch(item.color) {
+      case Colors.BRIGHT_WHITE:
+        colorizedMessage = colorizedMessage + item.content.white;
+        break;
+      case Colors.WHITE:
+        colorizedMessage = colorizedMessage + item.content.grey;
+        break;
+      case Colors.BRIGHT_MAGENTA:
+        colorizedMessage = colorizedMessage + item.content.magenta;
+        break;
+      case Colors.BRIGHT_GREEN:
+        colorizedMessage = colorizedMessage + item.content.green;
+        break;
+      default:
+        break;
+    }
+  });
+  return colorizedMessage;
 }

@@ -4,6 +4,7 @@
 
 import { Result } from "neverthrow";
 import { FxError } from "../error";
+import { Colors } from "./log";
 
 /**
  * @deprecated
@@ -86,7 +87,7 @@ export enum MsgLevel {
  * @deprecated
  */
 export interface IMessage {
-  description: string;
+  description: string | Array<{content: string, color: Colors}>;
   level: MsgLevel;
   items?: string[];
   modal?: boolean;

@@ -5,9 +5,10 @@
 
 import colors from "colors";
 
-import { LogLevel, LogProvider } from "@microsoft/teamsfx-api";
+import { LogLevel, LogProvider, Colors } from "@microsoft/teamsfx-api";
 
 import { CLILogLevel } from "../constants";
+import { getColorizedString } from "../utils";
 
 colors.white.green.yellow.red;
 
@@ -44,7 +45,7 @@ export class CLILogProvider implements LogProvider {
     return this.log(LogLevel.Debug, message);
   }
 
-  info(message: string): Promise<boolean> {
+  info(message: string | Array<{content: string, color: Colors}>): Promise<boolean> {
     return this.log(LogLevel.Info, message);
   }
 
@@ -95,16 +96,16 @@ export class CLILogProvider implements LogProvider {
     return msg;
   }
 
-  async log(logLevel: LogLevel, message: string): Promise<boolean> {
+  async log(logLevel: LogLevel, message: string | Array<{content: string, color: Colors}>): Promise<boolean> {
     switch (logLevel) {
       case LogLevel.Trace:
         if (CLILogProvider.logLevel === CLILogLevel.debug) {
-          console.trace(this.white(message));
+          console.trace(this.white(message as string));
         }
         break;
       case LogLevel.Debug:
         if (CLILogProvider.logLevel === CLILogLevel.debug) {
-          console.debug(this.white(message));
+          console.debug(this.white(message as string));
         }
         break;
       case LogLevel.Info:
@@ -112,39 +113,56 @@ export class CLILogProvider implements LogProvider {
           CLILogProvider.logLevel === CLILogLevel.debug ||
           CLILogProvider.logLevel === CLILogLevel.verbose
         ) {
-          console.info(this.white(message));
+          if (typeof message === "string") {
+            console.info(this.white(message as string));
+          } else {
+            const colorizedMessage = getColorizedString(message);
+            console.log(colorizedMessage);
+          }
         }
         break;
       case LogLevel.Warning:
         if (CLILogProvider.logLevel !== CLILogLevel.error) {
-          console.warn(this.yellow(message));
+          console.warn(this.yellow(message as string));
         }
         break;
       case LogLevel.Error:
       case LogLevel.Fatal:
-        console.error(this.red(message));
+        console.error(this.red(message as string));
         break;
     }
     return true;
   }
 
-  necessaryLog(logLevel: LogLevel, message: string, white = false) {
+  necessaryLog(logLevel: LogLevel, message: string | Array<{content: string, color: Colors}>, white = false) {
     switch (logLevel) {
       case LogLevel.Trace:
       case LogLevel.Debug:
       case LogLevel.Info:
-        if (white) {
-          console.info(this.white(message));
+        if (typeof message === "string") {
+          if (white) {
+            console.info(this.white(message));
+          } else {
+            console.info(this.green(message));
+          }
         } else {
-          console.info(this.green(message));
+          this.log(LogLevel.Info, message);
         }
         break;
       case LogLevel.Warning:
-        console.warn(this.yellow(message));
+        if (typeof message === "string") {
+          console.warn(this.yellow(message));
+        } else {
+          this.log(LogLevel.Warning, message);
+        }
         break;
       case LogLevel.Error:
       case LogLevel.Fatal:
-        console.error(this.red(message));
+        if (typeof message === "string") {
+          console.error(this.red(message));
+        } else {
+          this.log(LogLevel.Fatal, message);
+        }
         break;
     }
   }
