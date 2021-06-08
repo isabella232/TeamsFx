@@ -1,9 +1,9 @@
 name: SDK CI
 
 on:
-  pull_request:
+  push:
     branches:
-      - main
+      - wenyt/chore/actions/account
     paths:
       - packages/sdk/**
 
