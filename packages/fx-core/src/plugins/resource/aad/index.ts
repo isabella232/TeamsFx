@@ -1,30 +1,31 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { Plugin, PluginContext, SystemError, UserError, err } from "@microsoft/teamsfx-api";
+import { Plugin, PluginContext, SystemError, UserError, err, LogLevel } from "@microsoft/teamsfx-api";
 import { AadResult, ResultFactory } from "./aadResult";
 import { Plugins } from "./constants/constants";
 import { UnhandledError } from "./errors";
 import { Provision } from "./stages/provision";
+import { Stage } from "../commonUtils/interfaces/Stages";
 
 export class AadAppForTeamsPlugin implements Plugin {
   public async provision(ctx: PluginContext): Promise<AadResult> {
+    const provisionRes = new Provision(ctx, false, Plugins.AADPlugin);
     try {
-      const provisionRes = new Provision(ctx, false, Plugins.AADPlugin);
       const res = await provisionRes.run();
       return res;
     } catch (error) {
-      return this.returnError(error, ctx);
+      return this.returnError(provisionRes, error);
     }
   }
 
   public async localDebug(ctx: PluginContext): Promise<AadResult> {
+    const provisionRes = new Provision(ctx, true, Plugins.AADPlugin);
     try {
-      const provisionRes = new Provision(ctx, true, Plugins.AADPlugin);
       const res = await provisionRes.run();
       return res;
     } catch (error) {
-      return this.returnError(error, ctx);
+      return this.returnError(provisionRes, error);
     }
   }
 
@@ -40,32 +41,29 @@ export class AadAppForTeamsPlugin implements Plugin {
     return ResultFactory.Success();
   }
 
-  private returnError(e: any, ctx: PluginContext): AadResult {
-    if (e instanceof SystemError || e instanceof UserError) {
-      let errorMessage = e.message;
-      if (e.innerError) {
-        errorMessage += ` Detailed error: ${e.innerError.message}.`;
-        if (e.innerError.response?.data?.errorMessage) {
-          errorMessage += ` Reason: ${e.innerError.response?.data?.errorMessage}`;
-        }
+  private returnError(stage: Stage, error: any): AadResult {
+    if (!(error instanceof SystemError || error instanceof UserError)) {
+      if (!(error instanceof Error)) {
+        error = new Error(error.toString());
       }
-      ctx.logProvider?.error(errorMessage);
-      return err(e);
-    } else {
-      if (!(e instanceof Error)) {
-        e = new Error(e.toString());
-      }
-
-      ctx.logProvider?.error(e.message);
-      return err(
-        ResultFactory.SystemError(
-          UnhandledError.name,
-          UnhandledError.message(),
-          e,
-          undefined,
-          undefined
-        )
-      );
+      error = ResultFactory.SystemError("UnhandledError", `Unhandled Error: ${error.message}`);
     }
+
+    let detailedErrorMessage: string | undefined;
+    if (error.innerError) {
+      detailedErrorMessage += ` Detailed error: ${error.innerError.message}.`;
+      if (error.innerError.response?.data?.errorMessage) {
+        detailedErrorMessage += ` Reason: ${error.innerError.response?.data?.errorMessage}`;
+      }
+    }
+
+    stage.sendLog(error.message, LogLevel.Error);
+    if (detailedErrorMessage) {
+      stage.sendLog(error.message, LogLevel.Error);
+    }
+
+    stage.sendTelemetryErrorEvent(error, detailedErrorMessage);
+    stage.progressBar?.end();
+    return err(error);
   }
 }

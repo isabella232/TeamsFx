@@ -1,8 +1,9 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { ConfigValue, FxError, PluginContext, Result } from "@microsoft/teamsfx-api";
+import { ConfigValue, FxError, IProgressHandler, LogLevel, PluginContext, Result, UserError } from "@microsoft/teamsfx-api";
 import { IConfig, IConfigValue } from "./IConfig";
+import { IStageEvents } from "./IEvents";
 import { IPlugin } from "./IPlugin";
 
 const Telemetry = {
@@ -11,20 +12,21 @@ const Telemetry = {
     key: "success",
     yes: "yes",
     no: "no",
-  }
+  },
+  error: {
+    errorCode: "error-code",
+    errorMessage: "error-message",
+    errorType: {
+      key: "error-type",
+      userError: "user",
+      systemError: "system",
+    }
+  },
+  appId: "appid",
 };
 
-interface IEventMessages {
-  telemetry: string,
-  log: string,
-}
-
-export interface IStageEvents {
-  start: IEventMessages,
-  end: IEventMessages,
-}
-
 export abstract class Stage {
+  public progressBar?: IProgressHandler;
   protected inputConfig?: IConfig;
   protected outputConfig?: IConfig;
   protected ctx: PluginContext;
@@ -32,7 +34,7 @@ export abstract class Stage {
   protected plugin: IPlugin;
   protected abstract event: IStageEvents;
 
-  constructor(ctx: PluginContext, isLocalDebug = false, plugin: IPlugin) {
+  constructor(ctx: PluginContext, plugin: IPlugin, isLocalDebug = false) {
     this.ctx = ctx;
     this.isLocalDebug = isLocalDebug;
     this.plugin = plugin;
@@ -60,10 +62,34 @@ export abstract class Stage {
     console.log(`${key}::${value}`);
   }
 
+  public sendTelemetryErrorEvent(error: FxError, detailedMessage?: string ,properties?: { [key: string]: string }, measurements?: { [key: string]: number }): void {
+    if (!properties) {
+      properties = {};
+    }
+
+    let errorMessage = error.message;
+    if (detailedMessage) {
+      errorMessage += ` Detailed Message: ${detailedMessage}`;
+    }
+
+    properties[Telemetry.component] = this.plugin.id;
+    properties[Telemetry.success.key] = Telemetry.success.no;
+    properties[Telemetry.appId] = this.getAppId();
+    properties[Telemetry.error.errorCode] = `${this.plugin.shortName}.${error.name}`;
+    properties[Telemetry.error.errorType.key] = error instanceof UserError ? Telemetry.error.errorType.userError : Telemetry.error.errorType.systemError;
+    properties[Telemetry.error.errorMessage] = errorMessage;
+    this.ctx.telemetryReporter?.sendTelemetryErrorEvent(this.event.end.telemetry, properties, measurements);
+  }
+
+  public sendLog(message: string, logLevel: LogLevel): void {
+    this.ctx.logProvider?.log(logLevel, message);
+  }
+
   protected sendStartTelemetryEvent(): void {
     const properties: { [key: string]: string } = {};
     properties[Telemetry.component] = this.plugin.id;
     properties[Telemetry.success.key] = Telemetry.success.yes;
+    properties[Telemetry.appId] = this.getAppId();
     this.ctx.telemetryReporter?.sendTelemetryEvent(this.event.start.telemetry, properties);
   }
 
@@ -74,7 +100,7 @@ export abstract class Stage {
 
     properties[Telemetry.component] = this.plugin.id;
     properties[Telemetry.success.key] = Telemetry.success.yes;
-
+    properties[Telemetry.appId] = this.getAppId();
     this.ctx.telemetryReporter?.sendTelemetryEvent(this.event.end.telemetry, properties, measurements);
   }
 
@@ -114,6 +140,10 @@ export abstract class Stage {
     return `[${this.plugin.name}] ${message}`;
   }
 
+  protected createProgressBar(title: string, steps: number): void {
+    this.progressBar = this.ctx.dialog?.createProgressBar(title, steps) as IProgressHandler;
+  } 
+
   private readConfigFromContext(pluginId: string, key: string, required = true): ConfigValue {
     const configValue: ConfigValue = this.ctx.configOfOtherPlugins.get(pluginId)?.get(key);
     if (!configValue && required) {
@@ -127,5 +157,10 @@ export abstract class Stage {
       return;
     }
     this.ctx.config.set(key, value);
+  }
+
+  private getAppId(): string {
+    const appId = this.ctx.configOfOtherPlugins.get("solution")?.get("remoteTeamsAppId");
+    return appId ? appId as string : "";
   }
 }

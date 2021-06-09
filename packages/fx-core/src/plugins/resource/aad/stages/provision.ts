@@ -14,14 +14,20 @@ export class Provision extends Stage {
 	inputConfig = provisionInputConfig;
 	outputConfig = provisionOutputConfig;
 
-	constructor(ctx: PluginContext, isLocalDebug = false, plugin: IPlugin) {
-		super(ctx, isLocalDebug, plugin);
+	constructor(ctx: PluginContext, plugin: IPlugin, isLocalDebug = false) {
+		super(ctx, plugin, isLocalDebug);
 	}
 
 	public async run(): Promise<AadResult> {
 		this.sendStartTelemetryEvent();
 		this.readConfig();
 		this.setConfig(Plugins.AADPlugin.configKeys.clientId, this.getConfig(Plugins.AADPlugin.configKeys.permissionRequest));
+    // throw new Error("test");
+    // throw ResultFactory.UserError("user","test");
+    this.createProgressBar("test", 2);
+    await this.progressBar?.start("1");
+    await this.progressBar?.next("2");
+    await this.progressBar?.end();
 		this.saveConfig();
 		this.sendTelemetryEvent();
 		return ResultFactory.Success();

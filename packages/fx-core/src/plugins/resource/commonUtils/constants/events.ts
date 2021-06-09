@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-import { IStageEvents } from "../interfaces/Stages";
+import { IStageEvents } from "../interfaces/IEvents";
 
 export class Events {
   static Provision: IStageEvents = {
